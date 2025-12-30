@@ -1,6 +1,38 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Tajawal Font Definitions */
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Tajawal-Regular-Arabic.woff2') format('woff2'),
+       url('/fonts/Tajawal-Regular-Latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Tajawal-Medium-Arabic.woff2') format('woff2'),
+       url('/fonts/Tajawal-Medium-Latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Tajawal-Bold-Arabic.woff2') format('woff2'),
+       url('/fonts/Tajawal-Bold-Latin.woff2') format('woff2');
+}
+
+@theme {
+  --font-sans: 'Tajawal', sans-serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

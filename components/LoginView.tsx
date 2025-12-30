@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Lock, Mail, Loader2, ShieldAlert } from 'lucide-react';
+import { Lock, Mail, Loader2, ShieldAlert, RefreshCw, ShieldCheck } from 'lucide-react';
 import { seedAdmin } from '../lib/api';
 
 // Initialize Supabase client
@@ -19,7 +19,19 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [captcha, setCaptcha] = useState('');
+  const [captchaNum1, setCaptchaNum1] = useState(0);
+  const [captchaNum2, setCaptchaNum2] = useState(0);
+
+  useEffect(() => {
+    refreshCaptcha();
+  }, []);
+
+  const refreshCaptcha = () => {
+    setCaptchaNum1(Math.floor(Math.random() * 10));
+    setCaptchaNum2(Math.floor(Math.random() * 10));
+    setCaptcha('');
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,39 +39,22 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setError(null);
     setMsg(null);
 
+    if (parseInt(captcha) !== captchaNum1 + captchaNum2) {
+        setError('رمز التحقق غير صحيح');
+        return;
+    }
+
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: email.split('@')[0],
-            }
-          }
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data.user && data.user.identities && data.user.identities.length === 0) {
-             setError('This email is already registered. Please sign in.');
-             return;
-        }
-
-        setMsg('Registration successful! You can now sign in.');
-        setIsSignUp(false);
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        if (data.session) {
-          localStorage.setItem('sb-access-token', data.session.access_token);
-          onLoginSuccess();
-        }
+      if (data.session) {
+        localStorage.setItem('sb-access-token', data.session.access_token);
+        onLoginSuccess();
       }
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
@@ -83,96 +78,143 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
-          </h1>
-          <p className="text-gray-500">
-            {isSignUp ? 'Sign up to get started' : 'Sign in to access your dashboard'}
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] font-sans" dir="rtl">
+      <div className="max-w-[400px] w-full bg-white rounded-[20px] shadow-2xl p-8 border border-gray-100 relative overflow-hidden">
+        {/* Top Bar Decoration */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#001f3f]"></div>
+
+        <div className="text-center mb-8 mt-4">
+          {/* Logo Area */}
+          <div className="flex justify-center mb-6">
+             <img src="/logo.png" alt="Zawaya Albina" className="h-20 object-contain" onError={(e) => {
+                 e.currentTarget.style.display = 'none';
+                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
+             }} />
+             <div className="hidden text-center">
+                <h2 className="text-xl font-bold text-[#001f3f]">ZAWAYA ALBINA</h2>
+                <p className="text-xs text-gray-500">ENGINEERING CONSULTANCY</p>
+                <p className="text-xs text-gray-500">شركة زوايا البناء للإستشارات الهندسية</p>
+             </div>
+          </div>
+
+          <h1 className="text-2xl font-bold text-[#001f3f] mb-2">بوابة الإدارة الهندسية</h1>
+          <p className="text-[10px] text-gray-400 tracking-[0.2em] uppercase">ENGINEERING MANAGEMENT PORTAL</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+          <div className="mb-6 p-3 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm text-center animate-pulse">
             {error}
           </div>
         )}
         
         {msg && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-600 rounded-xl text-sm">
+          <div className="mb-6 p-3 bg-green-50 border border-green-100 text-green-600 rounded-xl text-sm text-center">
             {msg}
           </div>
         )}
 
-        <form onSubmit={handleAuth} className="space-y-6">
+        <form onSubmit={handleAuth} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <label className="block text-xs font-bold text-gray-600 mb-2 text-right">اسم المستخدم</label>
+            <div className="relative group">
+              <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#001f3f] transition-colors" size={18} />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="name@company.com"
+                className="w-full pr-10 pl-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#001f3f]/20 focus:border-[#001f3f] outline-none transition-all text-right text-gray-800 placeholder-gray-400 font-medium"
+                placeholder="admin@example.com"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <label className="block text-xs font-bold text-gray-600 mb-2 text-right">كلمة المرور</label>
+            <div className="relative group">
+              <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#001f3f] transition-colors" size={18} />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                className="w-full pr-10 pl-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#001f3f]/20 focus:border-[#001f3f] outline-none transition-all text-right text-gray-800 placeholder-gray-400 font-medium"
                 placeholder="••••••••"
                 required
               />
             </div>
           </div>
 
+          {/* Enhanced Captcha */}
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+             <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center gap-2 cursor-pointer group" onClick={refreshCaptcha}>
+                    <RefreshCw size={14} className="text-gray-400 group-hover:text-[#001f3f] transition-colors" />
+                    <span className="text-xs text-gray-400 group-hover:text-[#001f3f] transition-colors">تحديث الرمز</span>
+                </div>
+                <span className="text-xs font-bold text-gray-500">التحقق الأمني</span>
+             </div>
+             <div className="flex gap-3">
+                <input 
+                    type="number" 
+                    className="w-1/3 border border-gray-300 rounded-lg px-3 text-center outline-none focus:border-[#001f3f] focus:ring-2 focus:ring-[#001f3f]/10 font-bold text-lg"
+                    value={captcha}
+                    onChange={(e) => setCaptcha(e.target.value)}
+                    placeholder="?"
+                />
+                <div className="flex-1 bg-white border border-gray-300 rounded-lg flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/diagonal-noise.png')]"></div>
+                    <span className="font-mono text-2xl font-bold tracking-widest text-[#001f3f] select-none">
+                        {captchaNum1} + {captchaNum2} =
+                    </span>
+                </div>
+             </div>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#001f3f] text-white py-4 rounded-xl font-bold hover:bg-[#003366] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-[#001f3f]/20"
           >
             {loading ? (
               <>
                 <Loader2 className="animate-spin" size={20} />
-                {isSignUp ? 'Creating Account...' : 'Signing in...'}
+                جاري الدخول...
               </>
             ) : (
-              isSignUp ? 'Sign Up' : 'Sign In'
+              <>
+                <span>دخول آمن للنظام</span>
+                <div className="bg-white/10 p-1.5 rounded-lg">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                        <polyline points="10 17 15 12 10 7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                </div>
+              </>
             )}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-blue-600 hover:underline font-medium"
-            >
-              {isSignUp ? 'Sign In' : 'Sign Up'}
-            </button>
-          </p>
+        <div className="mt-8 text-center space-y-6">
+            <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400 uppercase tracking-wider font-medium">
+                <span>Secure Encrypted Connection</span>
+                <ShieldCheck size={12} className="text-green-500" />
+            </div>
+
+            <p className="text-[10px] text-gray-400">
+                جميع الحقوق محفوظة © {new Date().getFullYear()} زوايا البناء للإستشارات الهندسية
+            </p>
         </div>
         
-        <div className="mt-6 text-center pt-4 border-t border-gray-100">
+        {/* Hidden Seed Button for Admin */}
+        <div className="mt-2 text-center opacity-0 hover:opacity-100 transition-opacity">
             <button 
                 onClick={handleSeed}
                 disabled={seeding}
-                className="text-xs text-gray-400 hover:text-blue-600 flex items-center justify-center gap-1 mx-auto"
+                className="text-[10px] text-gray-300 hover:text-[#001f3f] flex items-center justify-center gap-1 mx-auto"
             >
-                <ShieldAlert size={12} />
-                {seeding ? 'Initializing...' : 'Initialize System (First Run)'}
+                <ShieldAlert size={10} />
+                {seeding ? 'Initializing...' : 'Init'}
             </button>
         </div>
       </div>
