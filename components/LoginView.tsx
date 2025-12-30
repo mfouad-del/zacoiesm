@@ -19,28 +19,50 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setMsg(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: email.split('@')[0],
+            }
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data.session) {
-        // Store token for API calls
-        localStorage.setItem('sb-access-token', data.session.access_token);
-        onLoginSuccess();
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+             setError('This email is already registered. Please sign in.');
+             return;
+        }
+
+        setMsg('Registration successful! You can now sign in.');
+        setIsSignUp(false);
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        if (data.session) {
+          localStorage.setItem('sb-access-token', data.session.access_token);
+          onLoginSuccess();
+        }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to login');
+      setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -64,8 +86,12 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-500">Sign in to access your dashboard</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </h1>
+          <p className="text-gray-500">
+            {isSignUp ? 'Sign up to get started' : 'Sign in to access your dashboard'}
+          </p>
         </div>
 
         {error && (
@@ -80,7 +106,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleAuth} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
             <div className="relative">
@@ -119,15 +145,27 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             {loading ? (
               <>
                 <Loader2 className="animate-spin" size={20} />
-                Signing in...
+                {isSignUp ? 'Creating Account...' : 'Signing in...'}
               </>
             ) : (
-              'Sign In'
+              isSignUp ? 'Sign Up' : 'Sign In'
             )}
           </button>
         </form>
-        
+
         <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-blue-600 hover:underline font-medium"
+            >
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
+        </div>
+        
+        <div className="mt-6 text-center pt-4 border-t border-gray-100">
             <button 
                 onClick={handleSeed}
                 disabled={seeding}

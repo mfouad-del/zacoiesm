@@ -99,10 +99,11 @@ const App: React.FC = () => {
         console.error("Failed to load data", error);
       }
     };
-    loadData();
+    
+    if (isAuthenticated) {
+      loadData();
+    }
   }, [isAuthenticated]);
-    loadData();
-  }, []);
 
   // حفظ البيانات تلقائياً عند أي تغيير
   useEffect(() => {

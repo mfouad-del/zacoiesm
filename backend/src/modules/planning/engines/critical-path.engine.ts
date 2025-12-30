@@ -17,23 +17,23 @@ export interface Task {
 
 export class CPMEngine {
   static calculate(tasks: Task[]): Task[] {
+    // Create a map of working objects
     const taskMap = new Map<string, Task>();
     tasks.forEach(t => taskMap.set(t.id, { ...t, dependencies: [...t.dependencies] }));
 
-    // Forward Pass (Calculate ES, EF)
-    // Topological sort or iterative approach needed. 
-    // For simplicity, we'll iterate until no changes (inefficient but works for small graphs) or use a simple dependency check.
-    
+    const workingTasks = Array.from(taskMap.values());
+
     // Reset values
-    tasks.forEach(t => {
+    workingTasks.forEach(t => {
       t.earlyStart = 0;
       t.earlyFinish = t.duration;
     });
 
+    // Forward Pass
     let changed = true;
     while (changed) {
       changed = false;
-      for (const task of tasks) {
+      for (const task of workingTasks) {
         let maxPrevEF = 0;
         for (const depId of task.dependencies) {
           const depTask = taskMap.get(depId);
@@ -47,17 +47,16 @@ export class CPMEngine {
         if (task.earlyStart !== maxPrevEF) {
           task.earlyStart = maxPrevEF;
           task.earlyFinish = (task.earlyStart || 0) + task.duration;
-          // Update map
-          taskMap.set(task.id, task);
           changed = true;
         }
       }
     }
 
-    // Backward Pass (Calculate LS, LF, Float)
-    const projectDuration = Math.max(...tasks.map(t => t.earlyFinish || 0));
-
-    tasks.forEach(t => {
+    // Backward Pass
+    const projectDuration = Math.max(...workingTasks.map(t => t.earlyFinish || 0));
+    
+    // Initialize Late dates
+    workingTasks.forEach(t => {
       t.lateFinish = projectDuration;
       t.lateStart = projectDuration - t.duration;
     });
@@ -65,30 +64,33 @@ export class CPMEngine {
     changed = true;
     while (changed) {
       changed = false;
-      for (const task of tasks) {
-        // Find successors
-        const successors = tasks.filter(t => t.dependencies.includes(task.id));
+      for (const task of workingTasks) {
+        let minNextLS = projectDuration;
         
-        let minSuccLS = projectDuration;
+        // Find successors
+        const successors = workingTasks.filter(t => t.dependencies.includes(task.id));
+        
         if (successors.length > 0) {
-            minSuccLS = Math.min(...successors.map(s => s.lateStart || projectDuration));
+          const successorStarts = successors.map(s => s.lateStart !== undefined ? s.lateStart : projectDuration);
+          minNextLS = Math.min(...successorStarts);
         }
 
-        if (task.lateFinish !== minSuccLS) {
-            task.lateFinish = minSuccLS;
-            task.lateStart = (task.lateFinish || 0) - task.duration;
-            taskMap.set(task.id, task);
-            changed = true;
+        if (task.lateFinish !== minNextLS) {
+          task.lateFinish = minNextLS;
+          task.lateStart = task.lateFinish - task.duration;
+          changed = true;
         }
       }
     }
 
-    // Calculate Float and Critical Path
-    for (const task of tasks) {
-      task.float = (task.lateStart || 0) - (task.earlyStart || 0);
-      task.isCritical = task.float === 0;
-    }
+    // Calculate Float & Criticality
+    workingTasks.forEach(t => {
+      t.float = (t.lateStart || 0) - (t.earlyStart || 0);
+      // Float can be slightly off due to floating point, but here we use integers mostly.
+      // Critical if float is 0
+      t.isCritical = Math.abs(t.float) < 0.001;
+    });
 
-    return tasks;
+    return workingTasks;
   }
 }
