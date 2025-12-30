@@ -1,12 +1,12 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, Contract, Variation } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { FileText, ArrowUpRight, Clock, AlertCircle, Plus } from 'lucide-react';
 
 interface ContractsViewProps {
   lang: Language;
-  contracts: any[];
-  variations: any[];
+  contracts: Contract[];
+  variations: Variation[];
   onAddVO: () => void;
 }
 

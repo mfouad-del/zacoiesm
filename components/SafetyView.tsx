@@ -1,9 +1,9 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, Incident } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ShieldAlert, Users, HeartPulse, Activity, AlertTriangle, Clock } from 'lucide-react';
 
-const SafetyView: React.FC<{ lang: Language; incidents: any[]; onAddIncident: () => void }> = ({ lang, incidents, onAddIncident }) => {
+const SafetyView: React.FC<{ lang: Language; incidents: Incident[]; onAddIncident: () => void }> = ({ lang, incidents, onAddIncident }) => {
   const t = TRANSLATIONS[lang];
 
   return (

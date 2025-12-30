@@ -1,9 +1,9 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, NCR } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ShieldCheck, Search, Filter, AlertTriangle, CheckCircle } from 'lucide-react';
 
-const QualityView: React.FC<{ lang: Language; ncrs: any[]; onAddNCR: () => void; onUpdateStatus: (id: string, status: string) => void }> = ({ lang, ncrs, onAddNCR, onUpdateStatus }) => {
+const QualityView: React.FC<{ lang: Language; ncrs: NCR[]; onAddNCR: () => void; onUpdateStatus: (id: string, status: string) => void }> = ({ lang, ncrs, onAddNCR, onUpdateStatus }) => {
   const t = TRANSLATIONS[lang];
 
   return (

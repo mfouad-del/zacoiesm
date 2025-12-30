@@ -1,9 +1,9 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, Document } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { Plus, Search, File, Download, MoreVertical } from 'lucide-react';
 
-const DocumentsView: React.FC<{ lang: Language; documents: any[]; onAddDoc: () => void }> = ({ lang, documents, onAddDoc }) => {
+const DocumentsView: React.FC<{ lang: Language; documents: Document[]; onAddDoc: () => void }> = ({ lang, documents, onAddDoc }) => {
   const t = TRANSLATIONS[lang];
 
   return (

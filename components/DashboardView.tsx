@@ -11,6 +11,32 @@ interface DashboardViewProps {
   incidentsCount: number;
 }
 
+const StatCard = ({ title, value, icon, color, trend }: any) => {
+  const colorMap: Record<string, string> = {
+    blue: 'bg-blue-600 shadow-blue-500/20',
+    indigo: 'bg-indigo-600 shadow-indigo-500/20',
+    emerald: 'bg-emerald-600 shadow-emerald-500/20',
+    amber: 'bg-amber-500 shadow-amber-500/20',
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm card-hover">
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-3 rounded-2xl text-white ${colorMap[color]}`}>
+          {icon}
+        </div>
+        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${trend.startsWith('↑') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+          {trend}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{title}</p>
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
+      </div>
+    </div>
+  );
+};
+
 const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidentsCount }) => {
   const t = TRANSLATIONS[lang];
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(
@@ -35,31 +61,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
     [projects, t]
   );
 
-  const StatCard = ({ title, value, icon, color, trend }: any) => {
-    const colorMap: Record<string, string> = {
-      blue: 'bg-blue-600 shadow-blue-500/20',
-      indigo: 'bg-indigo-600 shadow-indigo-500/20',
-      emerald: 'bg-emerald-600 shadow-emerald-500/20',
-      amber: 'bg-amber-500 shadow-amber-500/20',
-    };
 
-    return (
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm card-hover">
-        <div className="flex justify-between items-start mb-4">
-          <div className={`p-3 rounded-2xl text-white ${colorMap[color]}`}>
-            {icon}
-          </div>
-          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${trend.startsWith('↑') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-            {trend}
-          </div>
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{title}</p>
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

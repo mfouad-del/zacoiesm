@@ -1,8 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-// Use var to avoid TDZ issues with circular dependencies
-var client: SupabaseClient | undefined
+// Use let to avoid TDZ issues with circular dependencies
+let client: SupabaseClient | undefined
 
 export function createClient() {
   if (client) {

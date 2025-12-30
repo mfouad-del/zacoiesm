@@ -33,11 +33,13 @@ export interface Contract {
   id: string;
   projectId: string;
   title: string;
-  client: string;
+  vendor?: string;
+  client?: string;
   value: number;
   currency: string;
   startDate: string;
   endDate: string;
+  status: 'active' | 'completed' | 'pending' | 'terminated';
   milestones: Milestone[];
 }
 
@@ -46,6 +48,62 @@ export interface Milestone {
   name: string;
   date: string;
   status: 'pending' | 'completed';
+}
+
+export interface Variation {
+  id: string;
+  title: string;
+  value: number | string;
+  status: string;
+  color: string;
+}
+
+export interface PlanningTask {
+  id: string;
+  name: string;
+  progress: number;
+  critical: boolean;
+  start: number;
+  end: number;
+}
+
+export interface Report {
+  id: string;
+  projectId: string;
+  date: string;
+  activities: string;
+  laborCount: number;
+  equipmentCount: number;
+}
+
+export interface NCR {
+  id: string;
+  title: string;
+  severity: 'high' | 'medium' | 'low';
+  status: 'open' | 'closed';
+}
+
+export interface Document {
+  code: string;
+  title: string;
+  version: string;
+  date: string;
+  status: string;
+}
+
+export interface Timesheet {
+  id: string;
+  employee: string;
+  project: string;
+  hours: number;
+  status: 'Approved' | 'Pending';
+}
+
+export interface Incident {
+  id: string;
+  date: string;
+  severity: 'high' | 'medium' | 'low';
+  desc: string;
 }
 
 export interface Task {

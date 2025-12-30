@@ -13,15 +13,6 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ lang = 'ar' }) 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadNotifications();
-    subscribeToNotifications();
-
-    return () => {
-      notificationService.unsubscribe();
-    };
-  }, []);
-
   const loadNotifications = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -46,6 +37,16 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ lang = 'ar' }) 
       setUnreadCount(prev => prev + 1);
     });
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadNotifications();
+    subscribeToNotifications();
+
+    return () => {
+      notificationService.unsubscribe();
+    };
+  }, []);
 
   const handleMarkAsRead = async (id: string) => {
     await notificationService.markAsRead(id);

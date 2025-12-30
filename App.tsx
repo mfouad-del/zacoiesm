@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from './lib/api';
 import { auditLogger } from './lib/audit/logger';
-import { TRANSLATIONS, MENU_ITEMS } from './constants';
-import { Language, Project } from './types';
+import { Language, Project, Contract, Variation, PlanningTask, Report, NCR, Document, Timesheet, Incident } from './types';
 import { Toaster } from 'react-hot-toast';
-import NotificationsPanel from './components/NotificationsPanel';
 import DashboardView from './components/DashboardView';
 import ProjectsView from './components/ProjectsView';
 import ContractsView from './components/ContractsView';
@@ -23,45 +21,25 @@ import Header from './components/Header';
 import Modal from './components/Modal';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('sb-access-token'));
   const [lang, setLang] = useState<Language>('ar');
   const [activeModule, setActiveModule] = useState('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<string | null>(null);
 
-  // Check auth on mount
-  useEffect(() => {
-    const token = localStorage.getItem('sb-access-token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
-    setIsLoadingAuth(false);
-  }, []);
-
-  // Memoize filtered/computed data
-  const activeProjects = useMemo(
-    () => projects.filter(p => p.status === 'active'),
-    [projects]
-  );
-
-  const totalBudget = useMemo(
-    () => projects.reduce((acc, p) => acc + p.budget, 0),
-    [projects]
-  );
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [variations, setVariations] = useState<Variation[]>([]);
+  const [planningTasks, setPlanningTasks] = useState<PlanningTask[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [ncrs, setNcrs] = useState<NCR[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
 
   // --- الحالة المركزية المستمرة (Persistent Global State) ---
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [contracts, setContracts] = useState<any[]>([]);
-  const [variations, setVariations] = useState<any[]>([]);
-  const [planningTasks, setPlanningTasks] = useState<any[]>([]);
-  const [reports, setReports] = useState<any[]>([]);
-  const [ncrs, setNcrs] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [timesheets, setTimesheets] = useState<any[]>([]);
-  const [incidents, setIncidents] = useState<any[]>([]);
 
   // Fetch data from Backend
   useEffect(() => {
@@ -209,10 +187,6 @@ const App: React.FC = () => {
       default: return null;
     }
   };
-
-  if (isLoadingAuth) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
 
   if (!isAuthenticated) {
     return <LoginView onLoginSuccess={() => setIsAuthenticated(true)} />;

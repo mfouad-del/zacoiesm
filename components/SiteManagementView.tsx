@@ -1,9 +1,9 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, Report } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { Plus, Sun, Users, Truck, Camera, MessageSquare, Clock, Cloud, Thermometer, MapPin } from 'lucide-react';
 
-const SiteManagementView: React.FC<{ lang: Language; reports: any[]; onAddReport: () => void }> = ({ lang, reports, onAddReport }) => {
+const SiteManagementView: React.FC<{ lang: Language; reports: Report[]; onAddReport: () => void }> = ({ lang, reports, onAddReport }) => {
   const t = TRANSLATIONS[lang];
 
   return (

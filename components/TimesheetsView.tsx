@@ -1,9 +1,9 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, Timesheet } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { Plus, CheckCircle, Clock, User, Check } from 'lucide-react';
 
-const TimesheetsView: React.FC<{ lang: Language; entries: any[]; onAddEntry: () => void; onApprove: (id: string) => void }> = ({ lang, entries, onAddEntry, onApprove }) => {
+const TimesheetsView: React.FC<{ lang: Language; entries: Timesheet[]; onAddEntry: () => void; onApprove: (id: string) => void }> = ({ lang, entries, onAddEntry, onApprove }) => {
   const t = TRANSLATIONS[lang];
 
   return (

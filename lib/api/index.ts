@@ -1,4 +1,5 @@
 import { createClient } from '../supabase/client';
+import { Project, Contract } from '../../types';
 
 export interface ApiResponse<T> {
   data: T | null;
@@ -9,7 +10,7 @@ export interface ApiResponse<T> {
 // PROJECTS API
 // ============================================
 export const projectsApi = {
-  async list(): Promise<any[]> {
+  async list(): Promise<Project[]> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('projects')
@@ -17,10 +18,10 @@ export const projectsApi = {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data || [];
+    return (data || []) as unknown as Project[];
   },
 
-  async getById(id: string): Promise<any> {
+  async getById(id: string): Promise<Project> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('projects')
@@ -29,10 +30,10 @@ export const projectsApi = {
       .single();
     
     if (error) throw error;
-    return data;
+    return data as unknown as Project;
   },
 
-  async create(project: any): Promise<ApiResponse<any>> {
+  async create(project: Partial<Project>): Promise<ApiResponse<Project>> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -42,10 +43,10 @@ export const projectsApi = {
       .select()
       .single();
     
-    return { data, error: error?.message || null };
+    return { data: data as unknown as Project, error: error?.message || null };
   },
 
-  async update(id: string, project: any): Promise<ApiResponse<any>> {
+  async update(id: string, project: Partial<Project>): Promise<ApiResponse<Project>> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('projects')

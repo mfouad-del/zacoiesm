@@ -1,22 +1,8 @@
 /**
- * File Upload System - Cloudflare R2 (S3-Compatible)
+ * File Upload System - Cloudflare R2 (via Backend Presigned URLs)
  */
 
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { Upload } from '@aws-sdk/lib-storage';
-
-// Initialize R2 Client
-const r2Client = new S3Client({
-  region: import.meta.env.VITE_CF_R2_REGION || 'auto',
-  endpoint: import.meta.env.VITE_CF_R2_ENDPOINT,
-  credentials: {
-    accessKeyId: import.meta.env.VITE_CF_R2_ACCESS_KEY_ID || '',
-    secretAccessKey: import.meta.env.VITE_CF_R2_SECRET_ACCESS_KEY || ''
-  }
-});
-
-const BUCKET_NAME = import.meta.env.VITE_CF_R2_BUCKET || 'zaco';
-const BASE_FOLDER = import.meta.env.VITE_CF_R2_FOLDER || 'zacoengineer';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
 export interface UploadOptions {
   folder?: string;
@@ -68,43 +54,37 @@ export const uploadFile = async (
   }
   
   try {
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const extension = file.name.split('.').pop();
-    const originalName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
-    const sanitizedName = originalName.replace(/[^a-zA-Z0-9_-]/g, '_'); // Sanitize
-    const filename = `${sanitizedName}_${timestamp}_${randomStr}.${extension}`;
-    
-    // Build path: zacoengineer/uploads/2025/12/filename.pdf
-    const folder = options.folder || 'uploads';
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const path = `${BASE_FOLDER}/${folder}/${year}/${month}/${filename}`;
-    
-    // Convert File to ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
-    
-    // Upload to Cloudflare R2
-    const upload = new Upload({
-      client: r2Client,
-      params: {
-        Bucket: BUCKET_NAME,
-        Key: path,
-        Body: new Uint8Array(arrayBuffer),
-        ContentType: file.type,
-        Metadata: {
-          originalName: file.name,
-          uploadDate: now.toISOString()
-        }
+    // 1. Get Presigned URL from Backend
+    const response = await fetch(`${API_URL}/upload/presigned-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: file.name,
+        contentType: file.type,
+        folder: options.folder
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get upload URL');
+    }
+
+    const { uploadUrl, publicUrl, path } = await response.json();
+
+    // 2. Upload to R2 using Presigned URL
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type
       }
     });
-    
-    await upload.done();
-    
-    // Build public URL
-    const publicUrl = `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${path}`;
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload file to storage');
+    }
     
     return {
       path,
@@ -116,48 +96,19 @@ export const uploadFile = async (
   }
 };
 
+// Note: Delete and List operations should also be moved to backend
 export const deleteFile = async (path: string): Promise<boolean> => {
-  try {
-    const command = new DeleteObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: path
-    });
-    
-    await r2Client.send(command);
-    return true;
-  } catch (error) {
-    console.error('Delete failed:', error);
-    return false;
-  }
+  console.warn('Delete operation requires backend implementation');
+  return false; 
 };
 
 export const listFiles = async (folder: string = 'uploads'): Promise<any[]> => {
-  try {
-    const prefix = `${BASE_FOLDER}/${folder}/`;
-    
-    const command = new ListObjectsV2Command({
-      Bucket: BUCKET_NAME,
-      Prefix: prefix,
-      MaxKeys: 100
-    });
-    
-    const response = await r2Client.send(command);
-    
-    if (!response.Contents) return [];
-    
-    return response.Contents.map(item => ({
-      name: item.Key?.split('/').pop() || '',
-      path: item.Key || '',
-      size: item.Size || 0,
-      lastModified: item.LastModified,
-      url: `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${item.Key}`
-    }));
-  } catch (error) {
-    console.error('List files failed:', error);
-    return [];
-  }
+  console.warn('List operation requires backend implementation');
+  return [];
 };
 
 export const getFileUrl = (path: string): string => {
-  return `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${path}`;
+  // This might need adjustment based on how you serve files
+  return `${import.meta.env.VITE_CF_R2_ENDPOINT}/${import.meta.env.VITE_CF_R2_BUCKET}/${path}`;
 };
+

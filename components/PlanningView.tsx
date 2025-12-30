@@ -1,11 +1,11 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, PlanningTask } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { GanttChartSquare, Download, Plus, Filter, LayoutList } from 'lucide-react';
 
 interface PlanningViewProps {
   lang: Language;
-  activities: any[];
+  activities: PlanningTask[];
   onAddActivity: () => void;
 }
 

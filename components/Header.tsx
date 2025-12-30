@@ -1,7 +1,8 @@
 import React from 'react';
-import { Menu, Search, Bell, Globe, User, ChevronDown } from 'lucide-react';
+import { Menu, Search, Globe, User, ChevronDown } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
+import NotificationsPanel from './NotificationsPanel';
 
 interface HeaderProps {
   lang: Language;
@@ -43,10 +44,7 @@ const Header: React.FC<HeaderProps> = ({ lang, setLang, setSidebarOpen, isSideba
         </button>
         
         <div className="relative group">
-          <button className="p-3 text-slate-500 hover:bg-slate-100 rounded-xl transition-all relative active:scale-90">
-            <Bell size={22} />
-            <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
-          </button>
+          <NotificationsPanel lang={lang} />
         </div>
         
         <div className="w-[1.5px] h-8 bg-slate-200/80 mx-1 hidden md:block"></div>

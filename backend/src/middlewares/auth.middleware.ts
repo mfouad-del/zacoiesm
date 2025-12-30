@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import { Request, Response, NextFunction } from 'express';
 import { AuthService, UserPayload } from '../modules/auth/auth.service';
 import { UserRole, PERMISSIONS } from '../core/constants/roles';
