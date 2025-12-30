@@ -195,6 +195,8 @@ CREATE POLICY "Project members can upload documents" ON public.documents
 -- COST TRACKING - Restricted to Finance Roles
 -- ============================================
 DROP POLICY IF EXISTS "Authenticated users can view cost tracking" ON public.project_cost_tracking;
+DROP POLICY IF EXISTS "Authorized users can view cost tracking" ON public.project_cost_tracking;
+DROP POLICY IF EXISTS "Finance roles can manage cost tracking" ON public.project_cost_tracking;
 
 CREATE POLICY "Authorized users can view cost tracking" ON public.project_cost_tracking
   FOR SELECT USING (
