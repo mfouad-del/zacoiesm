@@ -1,0 +1,56 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "IEMS Backend API",
+    "version": "1.0.0",
+    "description": "API for Integrated Engineering Management System"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api/v1",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/costs/evm/calculate": {
+      "post": {
+        "summary": "Calculate EVM Metrics",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "budgetAtCompletion": { "type": "number" },
+                  "plannedValue": { "type": "number" },
+                  "earnedValue": { "type": "number" },
+                  "actualCost": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "EVM Metrics calculated successfully"
+          }
+        }
+      }
+    }
+  }
+}
