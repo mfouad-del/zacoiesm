@@ -1,0 +1,7 @@
+{
+  "name": "IEMS - Integrated Engineering Management System",
+  "description": "A comprehensive digital platform for managing engineering and construction projects from contract signing to delivery, including site management, quality control, HSE, and cost tracking.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
