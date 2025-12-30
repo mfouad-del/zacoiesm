@@ -1,18 +1,31 @@
 /**
- * File Upload System - Supabase Storage
+ * File Upload System - Cloudflare R2 (S3-Compatible)
  */
 
-import { createClient } from '../supabase/client';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+
+// Initialize R2 Client
+const r2Client = new S3Client({
+  region: import.meta.env.VITE_CF_R2_REGION || 'auto',
+  endpoint: import.meta.env.VITE_CF_R2_ENDPOINT,
+  credentials: {
+    accessKeyId: import.meta.env.VITE_CF_R2_ACCESS_KEY_ID || '',
+    secretAccessKey: import.meta.env.VITE_CF_R2_SECRET_ACCESS_KEY || ''
+  }
+});
+
+const BUCKET_NAME = import.meta.env.VITE_CF_R2_BUCKET || 'zaco';
+const BASE_FOLDER = import.meta.env.VITE_CF_R2_FOLDER || 'zacoengineer';
 
 export interface UploadOptions {
-  bucket: string;
   folder?: string;
   maxSize?: number; // MB
   allowedTypes?: string[];
 }
 
 const DEFAULT_OPTIONS: UploadOptions = {
-  bucket: 'documents',
+  folder: 'uploads',
   maxSize: 50, // 50MB
   allowedTypes: [
     'application/pdf',
@@ -23,7 +36,9 @@ const DEFAULT_OPTIONS: UploadOptions = {
     'image/jpeg',
     'image/png',
     'image/webp',
-    'application/zip'
+    'image/gif',
+    'application/zip',
+    'application/x-rar-compressed'
   ]
 };
 
@@ -45,55 +60,62 @@ export const validateFile = (file: File, options: UploadOptions = DEFAULT_OPTION
 export const uploadFile = async (
   file: File, 
   options: UploadOptions = DEFAULT_OPTIONS
-): Promise<{ path: string; url: string } | null> => {
-  const supabase = createClient();
-  
-  // Validate file
+):// Validate file
   const validation = validateFile(file, options);
   if (!validation.valid) {
     throw new Error(validation.error);
   }
   
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-    
     // Generate unique filename
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
     const extension = file.name.split('.').pop();
-    const filename = `${timestamp}-${randomStr}.${extension}`;
+    const originalName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+    const sanitizedName = originalName.replace(/[^a-zA-Z0-9_-]/g, '_'); // Sanitize
+    const filename = `${sanitizedName}_${timestamp}_${randomStr}.${extension}`;
     
-    // Build path
+    // Build path: zacoengineer/uploads/2025/12/filename.pdf
     const folder = options.folder || 'uploads';
-    const path = `${folder}/${user.id}/${filename}`;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const path = `${BASE_FOLDER}/${folder}/${year}/${month}/${filename}`;
     
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from(options.bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
     
-    if (error) throw error;
+    // Upload to Cloudflare R2
+    const upload = new Upload({
+      client: r2Client,
+      params: {
+        Bucket: BUCKET_NAME,
+        Key: path,
+        Body: new Uint8Array(arrayBuffer),
+        ContentType: file.type,
+        Metadata: {
+          originalName: file.name,
+          uploadDate: now.toISOString()
+        }
+      }
+    });
     
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(options.bucket)
-      .getPublicUrl(path);
+    await upload.done();
+    
+    // Build public URL
+    const publicUrl = `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${path}`;
     
     return {
-      path: data.path,
-      url: urlData.publicUrl
-    };
-  } catch (error) {
-    console.error('Upload failed:', error);
-    throw error;
-  }
-};
-
-export const deleteFile = async (path: string, bucket: string = 'documents'): Promise<boolean> => {
+      path,
+      url: th,
+      url: urlData.publicUrl): Promise<boolean> => {
+  try {
+    const command = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: path
+    });
+    
+    await r2Client.send(command)async (path: string, bucket: string = 'documents'): Promise<boolean> => {
   const supabase = createClient();
   
   try {
@@ -110,29 +132,32 @@ export const deleteFile = async (path: string, bucket: string = 'documents'): Pr
 };
 
 export const listFiles = async (folder: string, bucket: string = 'documents'): Promise<any[]> => {
-  const supabase = createClient();
-  
+  const supabase = createClient(); = 'uploads'): Promise<any[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
+    const prefix = `${BASE_FOLDER}/${folder}/`;
     
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list(`${folder}/${user.id}`, {
-        limit: 100,
-        sortBy: { column: 'created_at', order: 'desc' }
-      });
+    const command = new ListObjectsV2Command({
+      Bucket: BUCKET_NAME,
+      Prefix: prefix,
+      MaxKeys: 100
+    });
     
-    if (error) throw error;
-    return data || [];
+    const response = await r2Client.send(command);
+    
+    if (!response.Contents) return [];
+    
+    return response.Contents.map(item => ({
+      name: item.Key?.split('/').pop() || '',
+      path: item.Key || '',
+      size: item.Size || 0,
+      lastModified: item.LastModified,
+      url: `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${item.Key}`
+    }));
   } catch (error) {
     console.error('List files failed:', error);
     return [];
   }
 };
 
-export const getFileUrl = (path: string, bucket: string = 'documents'): string => {
-  const supabase = createClient();
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
-};
+export const getFileUrl = (path: string): string => {
+  return `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${path}`

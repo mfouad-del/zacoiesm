@@ -29,18 +29,38 @@ cp .env.example .env
 
 املأ الملف `.env`:
 ```env
+# Supabase
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# hCaptcha
 VITE_HCAPTCHA_SITE_KEY=your-hcaptcha-site-key
+VITE_HCAPTCHA_SECRET=your-hcaptcha-secret-from-dashboard
+
+# Cloudflare R2
+VITE_CF_R2_ACCESS_KEY_ID=your-r2-access-key-id
+VITE_CF_R2_SECRET_ACCESS_KEY=your-r2-secret-access-key
+VITE_CF_R2_BUCKET=zaco
+VITE_CF_R2_ENDPOINT=your-r2-endpoint
+VITE_CF_R2_REGION=auto
+VITE_CF_R2_FOLDER=zacoengineer
+
+# Security
 VITE_ENCRYPTION_KEY=your-32-character-encryption-key
 ```
 
-### 4. إعداد Supabase Database
+### 4. إعداد Cloudflare R2 Storage
 
-#### A. تنفيذ SQL Scripts بالترتيب:
-1. `scripts/001_create_tables.sql`
-2. `scripts/002_row_level_security.sql`
-3. `scripts/003_triggers_and_functions.sql`
+#### A. التحقق من إعدادات R2:
+- ✅ Bucket: `zaco` (موجود)
+- ✅ Access Key & Secret (مُضافة في `.env`)
+- ✅ المجلد الأساسي: `zacoengineer`
+
+**الهيكل التلقائي للملفات:**
+```
+zaco/
+  └── zacoengineer/
+    6cripts/003_triggers_and_functions.sql`
 4. `scripts/004_seed_data.sql`
 5. `scripts/005_create_super_admin.sql`
 6. `scripts/007_missing_tables.sql`

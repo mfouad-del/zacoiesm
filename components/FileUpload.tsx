@@ -31,7 +31,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     for (const file of files) {
       try {
         // Validate
-        const validation = validateFile(file, { bucket: 'documents', folder, maxSize, allowedTypes });
+        const validation = validateFile(file, { folder, maxSize, allowedTypes });
         if (!validation.valid) {
           toast.error(validation.error || 'خطأ في التحقق من الملف');
           setUploadedFiles(prev => [...prev, { name: file.name, url: '', status: 'error' }]);
@@ -39,7 +39,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         }
 
         // Upload
-        const result = await uploadFile(file, { bucket: 'documents', folder, maxSize, allowedTypes });
+        const result = await uploadFile(file, { folder, maxSize, allowedTypes });
         if (result) {
           toast.success(`تم رفع ${file.name} بنجاح`);
           setUploadedFiles(prev => [...prev, { name: file.name, url: result.url, status: 'success' }]);
