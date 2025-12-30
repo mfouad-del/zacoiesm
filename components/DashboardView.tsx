@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Project, Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { TrendingUp, AlertCircle, CheckCircle2, DollarSign, ArrowUpRight, Plus, Calendar, Activity } from 'lucide-react';
+import EVMDashboard from './EVMDashboard';
 
 interface DashboardViewProps {
   projects: Project[];
@@ -12,6 +13,9 @@ interface DashboardViewProps {
 
 const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidentsCount }) => {
   const t = TRANSLATIONS[lang];
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(
+    projects.length > 0 ? projects[0].id : undefined
+  );
 
   const chartData = projects.map(p => ({
     name: p.code,
@@ -151,6 +155,29 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
           </div>
         </div>
       </div>
+
+      {/* EVM Dashboard */}
+      {projects.length > 0 && (
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              📊 {lang === 'ar' ? 'تحليل الأداء - EVM' : 'Performance Analysis - EVM'}
+            </h2>
+            <select
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            >
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <EVMDashboard projectId={selectedProjectId} lang={lang} />
+        </div>
+      )}
     </div>
   );
 };

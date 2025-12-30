@@ -10,6 +10,7 @@ import {
   Files, 
   DollarSign, 
   Clock, 
+  Activity,
   Settings 
 } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export const TRANSLATIONS = {
     documents: 'Documents',
     costs: 'Costs & Resources',
     timesheets: 'Timesheets',
+    audit: 'Audit Trail',
     settings: 'Settings',
     totalBudget: 'Total Budget',
     activeProjects: 'Active Projects',
@@ -121,6 +123,7 @@ export const TRANSLATIONS = {
     documents: 'المستندات',
     costs: 'التكاليف والموارد',
     timesheets: 'الجداول الزمنية',
+    audit: 'سجل النشاطات',
     settings: 'الإعدادات',
     totalBudget: 'إجمالي الميزانية',
     activeProjects: 'المشاريع النشطة',
@@ -219,5 +222,6 @@ export const MENU_ITEMS = [
   { id: 'documents', icon: <Files size={20} />, labelKey: 'documents' },
   { id: 'costs', icon: <DollarSign size={20} />, labelKey: 'costs' },
   { id: 'timesheets', icon: <Clock size={20} />, labelKey: 'timesheets' },
+  { id: 'audit', icon: <Activity size={20} />, labelKey: 'audit' },
   { id: 'settings', icon: <Settings size={20} />, labelKey: 'settings' },
 ];

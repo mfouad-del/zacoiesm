@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from './lib/api';
+import { auditLogger } from './lib/audit/logger';
 import { TRANSLATIONS, MENU_ITEMS } from './constants';
 import { Language, Project } from './types';
 import DashboardView from './components/DashboardView';
@@ -13,6 +14,7 @@ import DocumentsView from './components/DocumentsView';
 import CostsView from './components/CostsView';
 import TimesheetsView from './components/TimesheetsView';
 import SettingsView from './components/SettingsView';
+import AuditTrailView from './components/AuditTrailView';
 import LoginView from './components/LoginView';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -161,8 +163,21 @@ const App: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const updateNCRStatus = (id: string, status: string) => setNcrs(ncrs.map(n => n.id === id ? { ...n, status } : n));
-  const approveTimesheet = (id: string) => setTimesheets(timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t));
+  const updateNCRStatus = async (id: string, status: string) => {
+    const ncr = ncrs.find(n => n.id === id);
+    if (ncr) {
+      await auditLogger.logNCRStatusChange(id, ncr.id, ncr.status, status);
+    }
+    setNcrs(ncrs.map(n => n.id === id ? { ...n, status } : n));
+  };
+  
+  const approveTimesheet = async (id: string) => {
+    const ts = timesheets.find(t => t.id === id);
+    if (ts) {
+      await auditLogger.logTimesheetApproval(id, ts.employeeName);
+    }
+    setTimesheets(timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t));
+  };
 
   const renderModule = () => {
     switch (activeModule) {
@@ -176,6 +191,7 @@ const App: React.FC = () => {
       case 'documents': return <DocumentsView lang={lang} documents={documents} onAddDoc={() => openModal('doc')} />;
       case 'costs': return <CostsView lang={lang} projects={projects} />;
       case 'timesheets': return <TimesheetsView lang={lang} entries={timesheets} onAddEntry={() => openModal('timesheet')} onApprove={approveTimesheet} />;
+      case 'audit': return <AuditTrailView lang={lang} />;
       case 'settings': return <SettingsView lang={lang} />;
       default: return null;
     }
