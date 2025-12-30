@@ -35,7 +35,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 # hCaptcha
 VITE_HCAPTCHA_SITE_KEY=your-hcaptcha-site-key
-VITE_HCAPTCHA_SECRET=your-hcaptcha-secret-from-dashboard
+VITE_HCAPTCHA_SECRET=your-hcaptcha-secret
 
 # Cloudflare R2
 VITE_CF_R2_ACCESS_KEY_ID=your-r2-access-key-id
