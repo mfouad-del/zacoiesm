@@ -13,18 +13,31 @@ import DocumentsView from './components/DocumentsView';
 import CostsView from './components/CostsView';
 import TimesheetsView from './components/TimesheetsView';
 import SettingsView from './components/SettingsView';
+import LoginView from './components/LoginView';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Modal from './components/Modal';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [lang, setLang] = useState<Language>('ar');
   const [activeModule, setActiveModule] = useState('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<string | null>(null);
 
+  // Check auth on mount
+  useEffect(() => {
+    const token = localStorage.getItem('sb-access-token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+    setIsLoadingAuth(false);
+  }, []);
+
   // --- الحالة المركزية المستمرة (Persistent Global State) ---
+
   const [projects, setProjects] = useState<Project[]>([]);
 
   const [contracts, setContracts] = useState<any[]>([]);
@@ -164,6 +177,14 @@ const App: React.FC = () => {
     }
   };
 
+  if (isLoadingAuth) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginView onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <div className={`min-h-screen flex ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
       <Sidebar isOpen={isSidebarOpen} activeModule={activeModule} setActiveModule={setActiveModule} lang={lang} />
@@ -185,5 +206,6 @@ const App: React.FC = () => {
     </div>
   );
 };
+
 
 export default App;

@@ -15,8 +15,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule
   return (
     <aside className={`sidebar-gradient text-slate-300 transition-all duration-300 ease-in-out z-40 relative flex flex-col border-slate-800 ${isOpen ? 'w-72' : 'w-20 overflow-hidden md:w-20'}`}>
       <div className="p-6 flex items-center gap-4 h-20 shrink-0 border-b border-white/5">
-        <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-brand-500/20 shrink-0">
-          <span className="text-xl">Σ</span>
+        <div className="w-10 h-10 shrink-0">
+           <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Logo" className="w-full h-full object-contain" />
         </div>
         {isOpen && (
           <div className="flex flex-col">
