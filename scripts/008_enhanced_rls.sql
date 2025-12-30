@@ -176,6 +176,7 @@ CREATE POLICY "HSE officers can update incidents" ON public.safety_incidents
 -- ============================================
 DROP POLICY IF EXISTS "Users can view documents" ON public.documents;
 DROP POLICY IF EXISTS "Project members can view documents" ON public.documents;
+DROP POLICY IF EXISTS "Project members can upload documents" ON public.documents;
 
 CREATE POLICY "Project members can view documents" ON public.documents
   FOR SELECT USING (
