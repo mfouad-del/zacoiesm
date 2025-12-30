@@ -60,7 +60,8 @@ export const validateFile = (file: File, options: UploadOptions = DEFAULT_OPTION
 export const uploadFile = async (
   file: File, 
   options: UploadOptions = DEFAULT_OPTIONS
-):// Validate file
+): Promise<{ path: string; url: string } | null> => {
+  // Validate file
   const validation = validateFile(file, options);
   if (!validation.valid) {
     throw new Error(validation.error);
@@ -107,23 +108,22 @@ export const uploadFile = async (
     
     return {
       path,
-      url: th,
-      url: urlData.publicUrl): Promise<boolean> => {
+      url: publicUrl
+    };
+  } catch (error) {
+    console.error('Upload failed:', error);
+    throw error;
+  }
+};
+
+export const deleteFile = async (path: string): Promise<boolean> => {
   try {
     const command = new DeleteObjectCommand({
       Bucket: BUCKET_NAME,
       Key: path
     });
     
-    await r2Client.send(command)async (path: string, bucket: string = 'documents'): Promise<boolean> => {
-  const supabase = createClient();
-  
-  try {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path]);
-    
-    if (error) throw error;
+    await r2Client.send(command);
     return true;
   } catch (error) {
     console.error('Delete failed:', error);
@@ -131,8 +131,7 @@ export const uploadFile = async (
   }
 };
 
-export const listFiles = async (folder: string, bucket: string = 'documents'): Promise<any[]> => {
-  const supabase = createClient(); = 'uploads'): Promise<any[]> => {
+export const listFiles = async (folder: string = 'uploads'): Promise<any[]> => {
   try {
     const prefix = `${BASE_FOLDER}/${folder}/`;
     
@@ -160,4 +159,5 @@ export const listFiles = async (folder: string, bucket: string = 'documents'): P
 };
 
 export const getFileUrl = (path: string): string => {
-  return `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${path}`
+  return `${import.meta.env.VITE_CF_R2_ENDPOINT}/${BUCKET_NAME}/${path}`;
+};

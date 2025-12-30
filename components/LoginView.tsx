@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { Lock, Mail, Loader2, ShieldAlert, RefreshCw, ShieldCheck } from 'lucide-react';
 import { seedAdmin } from '../lib/api';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { secureStorage, checkRateLimit, generateCSRFToken } from '../lib/utils/security';
 import toast, { Toaster } from 'react-hot-toast';
+import { createClient } from '../lib/supabase/client';
 
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Use shared Supabase client
+const supabase = createClient();
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
