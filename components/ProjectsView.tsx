@@ -1,7 +1,9 @@
 import React from 'react';
 import { Project, Language } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { Plus, Filter, MoreHorizontal, MapPin, Calendar, Clock, DollarSign, ArrowRight } from 'lucide-react';
+import { Plus, Filter, MoreHorizontal, MapPin, Calendar, Clock, DollarSign, ArrowRight, FileDown } from 'lucide-react';
+import { exportToExcel, exportToPDF } from '../lib/utils/export';
+import toast from 'react-hot-toast';
 
 interface ProjectsViewProps {
   projects: Project[];
@@ -11,6 +13,25 @@ interface ProjectsViewProps {
 
 const ProjectsView: React.FC<ProjectsViewProps> = ({ projects, lang, onAddProject }) => {
   const t = TRANSLATIONS[lang];
+
+  const handleExport = (format: 'excel' | 'pdf') => {
+    const data = projects.map(p => ({
+      'كود المشروع': p.code,
+      'اسم المشروع': p.name,
+      'الحالة': p.status,
+      'الميزانية': p.budget,
+      'التقدم': `${p.progress}%`
+    }));
+
+    if (format === 'excel') {
+      const success = exportToExcel(data, `projects_${Date.now()}`, 'المشاريع');
+      if (success) toast.success('تم تصدير Excel بنجاح');
+    } else {
+      const columns = ['كود المشروع', 'اسم المشروع', 'الحالة', 'الميزانية', 'التقدم'];
+      const success = exportToPDF(data, columns, `projects_${Date.now()}`, 'تقرير المشاريع');
+      if (success) toast.success('تم تصدير PDF بنجاح');
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -22,6 +43,20 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects, lang, onAddProjec
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => handleExport('excel')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-2xl text-sm font-bold hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-500/25"
+          >
+            <FileDown size={18} />
+            Excel
+          </button>
+          <button 
+            onClick={() => handleExport('pdf')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-2xl text-sm font-bold hover:bg-red-700 transition-all active:scale-95 shadow-lg shadow-red-500/25"
+          >
+            <FileDown size={18} />
+            PDF
+          </button>
           <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
             <Filter size={18} />
             {t.filter}

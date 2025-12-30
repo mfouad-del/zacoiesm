@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Project, Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
@@ -17,17 +17,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
     projects.length > 0 ? projects[0].id : undefined
   );
 
-  const chartData = projects.map(p => ({
-    name: p.code,
-    progress: p.progress,
-    budget: p.budget / 1000000,
-  }));
+  const chartData = useMemo(
+    () => projects.map(p => ({
+      name: p.code,
+      progress: p.progress,
+      budget: p.budget / 1000000,
+    })),
+    [projects]
+  );
 
-  const pieData = [
-    { name: t.completed, value: projects.filter(p => p.status === 'completed').length || 0, color: '#10b981' },
-    { name: t.active, value: projects.filter(p => p.status === 'active').length || 1, color: '#3b82f6' },
-    { name: t.onHold, value: projects.filter(p => p.status === 'on-hold').length || 0, color: '#f59e0b' },
-  ].filter(d => d.value > 0);
+  const pieData = useMemo(
+    () => [
+      { name: t.completed, value: projects.filter(p => p.status === 'completed').length || 0, color: '#10b981' },
+      { name: t.active, value: projects.filter(p => p.status === 'active').length || 1, color: '#3b82f6' },
+      { name: t.onHold, value: projects.filter(p => p.status === 'on-hold').length || 0, color: '#f59e0b' },
+    ].filter(d => d.value > 0),
+    [projects, t]
+  );
 
   const StatCard = ({ title, value, icon, color, trend }: any) => {
     const colorMap: Record<string, string> = {

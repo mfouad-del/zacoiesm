@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Lock, Mail, Loader2, ShieldAlert, RefreshCw, ShieldCheck } from 'lucide-react';
 import { seedAdmin } from '../lib/api';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { secureStorage, checkRateLimit, generateCSRFToken } from '../lib/utils/security';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,19 +22,14 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const [captcha, setCaptcha] = useState('');
-  const [captchaNum1, setCaptchaNum1] = useState(0);
-  const [captchaNum2, setCaptchaNum2] = useState(0);
+  const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
+  const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '10000000-ffff-ffff-ffff-000000000001';
 
   useEffect(() => {
-    refreshCaptcha();
+    // Generate CSRF token on mount
+    generateCSRFToken();
   }, []);
-
-  const refreshCaptcha = () => {
-    setCaptchaNum1(Math.floor(Math.random() * 10));
-    setCaptchaNum2(Math.floor(Math.random() * 10));
-    setCaptcha('');
-  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,9 +37,19 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setError(null);
     setMsg(null);
 
-    if (parseInt(captcha) !== captchaNum1 + captchaNum2) {
-        setError('رمز التحقق غير صحيح');
-        return;
+    // Check rate limiting (5 attempts per 15 minutes)
+    const canProceed = checkRateLimit('login-attempt', { maxAttempts: 5, windowMs: 15 * 60 * 1000 });
+    if (!canProceed) {
+      setError('محاولات تسجيل دخول كثيرة. حاول بعد 15 دقيقة');
+      setLoading(false);
+      return;
+    }
+
+    // Validate hCaptcha
+    if (!hcaptchaToken) {
+      setError('يرجى إكمال التحقق من hCaptcha');
+      setLoading(false);
+      return;
     }
 
     try {
@@ -53,11 +61,17 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       if (error) throw error;
 
       if (data.session) {
-        localStorage.setItem('sb-access-token', data.session.access_token);
+        // Store token securely with encryption
+        secureStorage.setItem('sb-access-token', data.session.access_token);
+        toast.success('تم تسجيل الدخول بنجاح');
         onLoginSuccess();
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      setError(err.message || 'فشل تسجيل الدخول');
+      toast.error(err.message || 'فشل تسجيل الدخول');
+      // Reset captcha on error
+      captchaRef.current?.resetCaptcha();
+      setHcaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -79,6 +93,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] font-sans" dir="rtl">
+      <Toaster position="top-center" />
       <div className="max-w-[400px] w-full bg-white rounded-[20px] shadow-2xl p-8 border border-gray-100 relative overflow-hidden">
         {/* Top Bar Decoration */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#001f3f]"></div>
@@ -144,30 +159,15 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          {/* Enhanced Captcha */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-             <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center gap-2 cursor-pointer group" onClick={refreshCaptcha}>
-                    <RefreshCw size={14} className="text-gray-400 group-hover:text-[#001f3f] transition-colors" />
-                    <span className="text-xs text-gray-400 group-hover:text-[#001f3f] transition-colors">تحديث الرمز</span>
-                </div>
-                <span className="text-xs font-bold text-gray-500">التحقق الأمني</span>
-             </div>
-             <div className="flex gap-3">
-                <input 
-                    type="number" 
-                    className="w-1/3 border border-gray-300 rounded-lg px-3 text-center outline-none focus:border-[#001f3f] focus:ring-2 focus:ring-[#001f3f]/10 font-bold text-lg"
-                    value={captcha}
-                    onChange={(e) => setCaptcha(e.target.value)}
-                    placeholder="?"
-                />
-                <div className="flex-1 bg-white border border-gray-300 rounded-lg flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/diagonal-noise.png')]"></div>
-                    <span className="font-mono text-2xl font-bold tracking-widest text-[#001f3f] select-none">
-                        {captchaNum1} + {captchaNum2} =
-                    </span>
-                </div>
-             </div>
+          {/* hCaptcha Verification */}
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-center">
+             <HCaptcha
+                ref={captchaRef}
+                sitekey={HCAPTCHA_SITE_KEY}
+                onVerify={(token) => setHcaptchaToken(token)}
+                onExpire={() => setHcaptchaToken(null)}
+                onError={() => setHcaptchaToken(null)}
+             />
           </div>
 
           <button

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from './lib/api';
 import { auditLogger } from './lib/audit/logger';
 import { TRANSLATIONS, MENU_ITEMS } from './constants';
 import { Language, Project } from './types';
+import { Toaster } from 'react-hot-toast';
+import NotificationsPanel from './components/NotificationsPanel';
 import DashboardView from './components/DashboardView';
 import ProjectsView from './components/ProjectsView';
 import ContractsView from './components/ContractsView';
@@ -37,6 +39,17 @@ const App: React.FC = () => {
     }
     setIsLoadingAuth(false);
   }, []);
+
+  // Memoize filtered/computed data
+  const activeProjects = useMemo(
+    () => projects.filter(p => p.status === 'active'),
+    [projects]
+  );
+
+  const totalBudget = useMemo(
+    () => projects.reduce((acc, p) => acc + p.budget, 0),
+    [projects]
+  );
 
   // --- الحالة المركزية المستمرة (Persistent Global State) ---
 
@@ -120,8 +133,8 @@ const App: React.FC = () => {
     localStorage.setItem('iems_incidents', JSON.stringify(incidents));
   }, [projects, contracts, variations, planningTasks, reports, ncrs, documents, timesheets, incidents]);
 
-  // معالج الإضافة العام
-  const handleFormSubmit = (formData: any) => {
+  // معالج الإضافة العام - memoized
+  const handleFormSubmit = useCallback((formData: any) => {
     const newId = Date.now().toString();
     const today = new Date().toISOString().split('T')[0];
 
@@ -157,13 +170,13 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  // Open modal with specific type
-  const openModal = (type: string) => {
+  // Open modal with specific type - memoized
+  const openModal = useCallback((type: string) => {
     setModalType(type);
     setIsModalOpen(true);
   };
 
-  const updateNCRStatus = async (id: string, status: string) => {
+  const updateNCRStatus = useCallback(async (id: string, status: string) => {
     const ncr = ncrs.find(n => n.id === id);
     if (ncr) {
       await auditLogger.logNCRStatusChange(id, ncr.id, ncr.status, status);
@@ -171,7 +184,7 @@ const App: React.FC = () => {
     setNcrs(ncrs.map(n => n.id === id ? { ...n, status } : n));
   };
   
-  const approveTimesheet = async (id: string) => {
+  const approveTimesheet = useCallback(async (id: string) => {
     const ts = timesheets.find(t => t.id === id);
     if (ts) {
       await auditLogger.logTimesheetApproval(id, ts.employeeName);
@@ -207,6 +220,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen flex ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
+      <Toaster position={lang === 'ar' ? 'top-right' : 'top-left'} />
       <Sidebar isOpen={isSidebarOpen} activeModule={activeModule} setActiveModule={setActiveModule} lang={lang} />
       <div className="flex-1 flex flex-col min-w-0 bg-gray-50 overflow-hidden">
         <Header lang={lang} setLang={setLang} setSidebarOpen={setSidebarOpen} isSidebarOpen={isSidebarOpen} />
