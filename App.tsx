@@ -168,13 +168,13 @@ const App: React.FC = () => {
         break;
     }
     setIsModalOpen(false);
-  };
+  }, [modalType, projects, contracts, variations, planningTasks, reports, ncrs, documents, timesheets, incidents]);
 
   // Open modal with specific type - memoized
   const openModal = useCallback((type: string) => {
     setModalType(type);
     setIsModalOpen(true);
-  };
+  }, []);
 
   const updateNCRStatus = useCallback(async (id: string, status: string) => {
     const ncr = ncrs.find(n => n.id === id);
@@ -182,7 +182,7 @@ const App: React.FC = () => {
       await auditLogger.logNCRStatusChange(id, ncr.id, ncr.status, status);
     }
     setNcrs(ncrs.map(n => n.id === id ? { ...n, status } : n));
-  };
+  }, [ncrs]);
   
   const approveTimesheet = useCallback(async (id: string) => {
     const ts = timesheets.find(t => t.id === id);
@@ -190,7 +190,7 @@ const App: React.FC = () => {
       await auditLogger.logTimesheetApproval(id, ts.employeeName);
     }
     setTimesheets(timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t));
-  };
+  }, [timesheets]);
 
   const renderModule = () => {
     switch (activeModule) {

@@ -1,0 +1,1 @@
+{"name":"IEMS Pro","short_name":"IEMS","description":"نظام إدارة المشاريع الهندسية المتكامل","start_url":"/pm/","display":"standalone","background_color":"#ffffff","theme_color":"#0271c7","lang":"en","scope":"/pm/","orientation":"portrait-primary","icons":[{"src":"/pm/logo.png","sizes":"192x192","type":"image/png","purpose":"any maskable"}]}
