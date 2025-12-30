@@ -276,7 +276,78 @@ app.post('/api/change-password', requireAuth, async (req, res) => {
 });
 
 
-// GET /api/projects
+// Generic CRUD Generator
+const createCrudRoutes = (tableName, routeName) => {
+    // GET All
+    app.get(`/api/${routeName}`, async (req, res) => {
+        try {
+            const { data, error } = await supabase.from(tableName).select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // GET One
+    app.get(`/api/${routeName}/:id`, async (req, res) => {
+        try {
+            const { data, error } = await supabase.from(tableName).select('*').eq('id', req.params.id).single();
+            if (error) throw error;
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // POST Create
+    app.post(`/api/${routeName}`, requireAuth, async (req, res) => {
+        try {
+            const { data, error } = await supabase.from(tableName).insert(req.body).select().single();
+            if (error) throw error;
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // PUT Update
+    app.put(`/api/${routeName}/:id`, requireAuth, async (req, res) => {
+        try {
+            const { data, error } = await supabase.from(tableName).update(req.body).eq('id', req.params.id).select().single();
+            if (error) throw error;
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // DELETE
+    app.delete(`/api/${routeName}/:id`, requireAuth, async (req, res) => {
+        try {
+            const { error } = await supabase.from(tableName).delete().eq('id', req.params.id);
+            if (error) throw error;
+            res.json({ message: 'Deleted successfully' });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+};
+
+// Register Routes
+createCrudRoutes('contracts', 'contracts');
+createCrudRoutes('variations', 'variations');
+createCrudRoutes('tasks', 'planning'); // Map 'planning' route to 'tasks' table
+createCrudRoutes('ncrs', 'quality'); // Map 'quality' route to 'ncrs' table
+createCrudRoutes('incidents', 'safety'); // Map 'safety' route to 'incidents' table
+createCrudRoutes('documents', 'documents');
+createCrudRoutes('timesheets', 'timesheets');
+createCrudRoutes('reports', 'reports');
+createCrudRoutes('resources', 'resources');
+createCrudRoutes('equipment', 'equipment');
+createCrudRoutes('sites', 'sites');
+
+// Projects (Custom to include relations)
 app.get('/api/projects', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -292,20 +363,38 @@ app.get('/api/projects', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching projects:', error);
-    // Fallback to mock data if DB fails or is empty (for demo purposes)
-    res.json([
-      { id: '1', name: 'برج وسط المدينة', code: 'DT-101', status: 'active', budget: 150000000, progress: 45, startDate: '2023-01-01', endDate: '2025-12-31' },
-      { id: '2', name: 'جسر الساحل', code: 'CB-202', status: 'active', budget: 85000000, progress: 20, startDate: '2023-06-15', endDate: '2026-06-15' },
-    ]);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/contracts
-app.get('/api/contracts', async (req, res) => {
-    // Mock data for now, replace with DB call
-    res.json([
-        { id: 'c1', projectId: '1', title: 'عقد الهيكل الخرساني', value: 50000000, status: 'Active' }
-    ]);
+app.post('/api/projects', requireAuth, async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('projects').insert(req.body).select().single();
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/projects/:id', requireAuth, async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('projects').update(req.body).eq('id', req.params.id).select().single();
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/projects/:id', requireAuth, async (req, res) => {
+    try {
+        const { error } = await supabase.from('projects').delete().eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ message: 'Deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Health Check

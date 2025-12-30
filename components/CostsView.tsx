@@ -7,10 +7,14 @@ import { DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 const CostsView: React.FC<{ lang: Language; projects: Project[] }> = ({ lang, projects }) => {
   const t = TRANSLATIONS[lang];
 
+  const totalBudget = projects.reduce((acc, p) => acc + (Number(p.budget) || 0), 0);
+  const totalSpent = projects.reduce((acc, p) => acc + (Number(p.spent) || 0), 0);
+  const variance = totalBudget - totalSpent;
+
   const data = projects.map(p => ({
-    name: p.code,
-    planned: p.budget / 1000000,
-    actual: (p.budget * (0.8 + Math.random() * 0.4)) / 1000000,
+    name: p.code || (p.name ? p.name.substring(0, 10) : 'N/A'),
+    planned: (Number(p.budget) || 0) / 1000000,
+    actual: (Number(p.spent) || 0) / 1000000,
   }));
 
   return (
@@ -25,25 +29,27 @@ const CostsView: React.FC<{ lang: Language; projects: Project[] }> = ({ lang, pr
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t.totalBudget}</p>
-          <p className="text-3xl font-bold text-gray-900">$435.0M</p>
+          <p className="text-3xl font-bold text-gray-900">${(totalBudget / 1000000).toFixed(1)}M</p>
           <div className="mt-4 flex items-center gap-2 text-sm text-emerald-600 font-bold">
             <ArrowUpRight size={16} />
-            <span>12% over baseline</span>
+            <span>{lang === 'ar' ? 'الميزانية الكلية' : 'Total Budget'}</span>
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t.actualCost}</p>
-          <p className="text-3xl font-bold text-gray-900">$218.4M</p>
+          <p className="text-3xl font-bold text-gray-900">${(totalSpent / 1000000).toFixed(1)}M</p>
           <div className="mt-4 flex items-center gap-2 text-sm text-blue-600 font-bold">
-            <span>50.2% Spent</span>
+            <span>{totalBudget > 0 ? ((totalSpent / totalBudget) * 100).toFixed(1) : 0}% Spent</span>
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase mb-1">{t.variance}</p>
-          <p className="text-3xl font-bold text-red-600">-$2.4M</p>
-          <div className="mt-4 flex items-center gap-2 text-sm text-red-600 font-bold">
-            <ArrowDownRight size={16} />
-            <span>Under-performing</span>
+          <p className={`text-3xl font-bold ${variance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            ${(variance / 1000000).toFixed(1)}M
+          </p>
+          <div className={`mt-4 flex items-center gap-2 text-sm font-bold ${variance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            {variance < 0 ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
+            <span>{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
           </div>
         </div>
       </div>

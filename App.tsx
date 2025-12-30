@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchProjects, fetchContracts } from './lib/api';
+import { api } from './lib/api';
 import { TRANSLATIONS, MENU_ITEMS } from './constants';
 import { Language, Project } from './types';
 import DashboardView from './components/DashboardView';
@@ -39,65 +39,68 @@ const App: React.FC = () => {
   // --- الحالة المركزية المستمرة (Persistent Global State) ---
 
   const [projects, setProjects] = useState<Project[]>([]);
-
   const [contracts, setContracts] = useState<any[]>([]);
-
-  const [variations, setVariations] = useState<any[]>(() => {
-    const saved = localStorage.getItem('iems_variations');
-    return saved ? JSON.parse(saved) : [
-      { id: 'VO-01', title: 'تغيير التصميم - الكمرات', value: 45000, status: 'Approved', color: 'emerald' }
-    ];
-  });
-
-  const [planningTasks, setPlanningTasks] = useState<any[]>(() => {
-    const saved = localStorage.getItem('iems_planning');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', name: 'التعبئة والموقع', start: 0, end: 10, progress: 100, critical: false },
-      { id: '2', name: 'الحفر والتدعيم', start: 8, end: 25, progress: 85, critical: true },
-    ];
-  });
-
-  const [reports, setReports] = useState<any[]>(() => {
-    const saved = localStorage.getItem('iems_reports');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [ncrs, setNcrs] = useState<any[]>(() => {
-    const saved = localStorage.getItem('iems_ncrs');
-    return saved ? JSON.parse(saved) : [
-      { id: 'NCR-102', title: 'تعشيش خرساني - حائط ب', severity: 'high', status: 'open', date: '2024-05-12' },
-    ];
-  });
-
-  const [documents, setDocuments] = useState<any[]>(() => {
-    const saved = localStorage.getItem('iems_docs');
-    return saved ? JSON.parse(saved) : [
-      { code: 'STR-DWG-001', title: 'Foundation Layout', version: 'V1.2', date: '2024-05-10', status: 'Approved' },
-    ];
-  });
-
-  const [timesheets, setTimesheets] = useState<any[]>(() => {
-    const saved = localStorage.getItem('iems_timesheets');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [incidents, setIncidents] = useState<any[]>(() => {
-    const saved = localStorage.getItem('iems_incidents');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [variations, setVariations] = useState<any[]>([]);
+  const [planningTasks, setPlanningTasks] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [ncrs, setNcrs] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [timesheets, setTimesheets] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<any[]>([]);
 
   // Fetch data from Backend
   useEffect(() => {
     const loadData = async () => {
+      if (!isAuthenticated) return;
       try {
-        const projectsData = await fetchProjects();
+        const [
+            projectsData,
+            contractsData,
+            variationsData,
+            planningData,
+            reportsData,
+            ncrsData,
+            documentsData,
+            timesheetsData,
+            incidentsData
+        ] = await Promise.all([
+            api.projects.list(),
+            api.contracts.list(),
+            api.variations.list(),
+            api.planning.list(),
+            api.reports.list(),
+            api.quality.list(),
+            api.documents.list(),
+            api.timesheets.list(),
+            api.safety.list()
+        ]);
+
         setProjects(projectsData);
-        const contractsData = await fetchContracts();
         setContracts(contractsData);
+        setVariations(variationsData);
+        
+        // Map tasks to planning view model
+        const mappedPlanning = planningData.map((t: any) => ({
+            id: t.id,
+            name: t.title,
+            progress: t.status === 'completed' ? 100 : (t.status === 'in_progress' ? 50 : 0),
+            start: Math.floor(Math.random() * 40), // Visual placeholder
+            end: 40 + Math.floor(Math.random() * 40), // Visual placeholder
+            critical: t.priority === 'urgent' || t.priority === 'high'
+        }));
+        setPlanningTasks(mappedPlanning);
+
+        setReports(reportsData);
+        setNcrs(ncrsData);
+        setDocuments(documentsData);
+        setTimesheets(timesheetsData);
+        setIncidents(incidentsData);
       } catch (error) {
         console.error("Failed to load data", error);
       }
     };
+    loadData();
+  }, [isAuthenticated]);
     loadData();
   }, []);
 
@@ -164,7 +167,7 @@ const App: React.FC = () => {
     switch (activeModule) {
       case 'dashboard': return <DashboardView projects={projects} lang={lang} incidentsCount={incidents.length} />;
       case 'projects': return <ProjectsView projects={projects} lang={lang} onAddProject={() => openModal('project')} />;
-      case 'contracts': return <ContractsView lang={lang} variations={variations} onAddVO={() => openModal('variation')} />;
+      case 'contracts': return <ContractsView lang={lang} contracts={contracts} variations={variations} onAddVO={() => openModal('variation')} />;
       case 'planning': return <PlanningView lang={lang} activities={planningTasks} onAddActivity={() => openModal('planning')} />;
       case 'site': return <SiteManagementView lang={lang} reports={reports} onAddReport={() => openModal('report')} />;
       case 'quality': return <QualityView lang={lang} ncrs={ncrs} onAddNCR={() => openModal('ncr')} onUpdateStatus={updateNCRStatus} />;
