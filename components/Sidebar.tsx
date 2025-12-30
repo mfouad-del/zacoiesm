@@ -7,10 +7,23 @@ interface SidebarProps {
   activeModule: string;
   setActiveModule: (id: string) => void;
   lang: Language;
+  user?: any;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule, lang }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule, lang, user }) => {
   const t = TRANSLATIONS[lang];
+
+  const getUserName = () => {
+    if (user?.user_metadata?.full_name) return user.user_metadata.full_name;
+    if (user?.email === 'admin@zaco.sa') return lang === 'ar' ? 'مدير النظام' : 'System Administrator';
+    return lang === 'ar' ? 'مستخدم' : 'User';
+  };
+
+  const getUserRole = () => {
+    if (user?.user_metadata?.role) return user.user_metadata.role;
+    if (user?.email === 'admin@zaco.sa') return lang === 'ar' ? 'مسؤول النظام' : 'Super Admin';
+    return lang === 'ar' ? 'عضو' : 'Member';
+  };
 
   return (
     <aside className={`sidebar-gradient text-slate-300 transition-all duration-300 ease-in-out z-40 relative flex flex-col border-slate-800 ${isOpen ? 'w-72' : 'w-20 overflow-hidden md:w-20'}`}>
@@ -58,17 +71,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule
         {isOpen ? (
           <div className="flex items-center gap-3 p-2">
             <div className="w-10 h-10 rounded-full border-2 border-brand-500/30 overflow-hidden shrink-0">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed" alt="User" />
+              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`} alt="User" />
             </div>
             <div className="flex flex-col min-w-0">
-              <p className="text-xs font-bold text-white truncate">{lang === 'ar' ? 'م. أحمد علي' : 'Eng. Ahmed Ali'}</p>
-              <p className="text-[10px] text-slate-500 font-medium truncate uppercase tracking-tighter">{lang === 'ar' ? 'مدير المشروع' : 'Project Manager'}</p>
+              <p className="text-xs font-bold text-white truncate">{getUserName()}</p>
+              <p className="text-[10px] text-slate-500 font-medium truncate uppercase tracking-tighter">{getUserRole()}</p>
             </div>
           </div>
         ) : (
           <div className="flex justify-center py-2">
              <div className="w-10 h-10 rounded-full border-2 border-brand-500/30 overflow-hidden shrink-0">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed" alt="User" />
+              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`} alt="User" />
             </div>
           </div>
         )}

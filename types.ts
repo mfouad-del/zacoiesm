@@ -1,14 +1,21 @@
 export type Language = 'en' | 'ar';
 
 export enum UserRole {
-  ADMIN = 'ADMIN',
-  PROJECT_MANAGER = 'PROJECT_MANAGER',
-  SITE_ENGINEER = 'SITE_ENGINEER',
-  TECHNICAL_OFFICE = 'TECHNICAL_OFFICE',
-  QUALITY_MANAGER = 'QUALITY_MANAGER',
-  HSE_OFFICER = 'HSE_OFFICER',
-  CONTRACTS_MANAGER = 'CONTRACTS_MANAGER',
-  TOP_MANAGEMENT = 'TOP_MANAGEMENT'
+  SUPER_ADMIN = 'super_admin',
+  ADMIN = 'admin',
+  PROJECT_MANAGER = 'project_manager',
+  SITE_ENGINEER = 'site_engineer',
+  TECHNICAL_OFFICE = 'technical_office',
+  QUALITY_MANAGER = 'quality_manager',
+  QA_MANAGER = 'qa_manager',
+  HSE_OFFICER = 'hse_officer',
+  SAFETY_OFFICER = 'safety_officer',
+  CONTRACTS_MANAGER = 'contracts_manager',
+  ACCOUNTANT = 'accountant',
+  TOP_MANAGEMENT = 'top_management',
+  CLIENT = 'client',
+  VIEWER = 'viewer',
+  USER = 'user'
 }
 
 export interface Project {
