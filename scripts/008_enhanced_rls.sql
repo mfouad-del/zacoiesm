@@ -1,13 +1,15 @@
 -- Enhanced RLS Policies with Resource Ownership
 -- Run after 007_missing_tables.sql
 
--- Drop old permissive policies
-DROP POLICY IF EXISTS "Authenticated users can view projects" ON public.projects;
-DROP POLICY IF EXISTS "Authenticated users can create projects" ON public.projects;
-
 -- ============================================
 -- PROJECTS - Resource Ownership Based
 -- ============================================
+-- Drop all existing policies first
+DROP POLICY IF EXISTS "Authenticated users can view projects" ON public.projects;
+DROP POLICY IF EXISTS "Authenticated users can create projects" ON public.projects;
+DROP POLICY IF EXISTS "Users can view their projects" ON public.projects;
+DROP POLICY IF EXISTS "Project managers can update their projects" ON public.projects;
+
 -- Users can only view projects they are members of OR created
 CREATE POLICY "Users can view their projects" ON public.projects
   FOR SELECT USING (
@@ -35,6 +37,8 @@ CREATE POLICY "Project managers can update their projects" ON public.projects
 -- TASKS - Based on Project Membership
 -- ============================================
 DROP POLICY IF EXISTS "Users can view tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Users can view tasks in their projects" ON public.tasks;
+DROP POLICY IF EXISTS "Project members can create tasks" ON public.tasks;
 
 CREATE POLICY "Users can view tasks in their projects" ON public.tasks
   FOR SELECT USING (
@@ -54,6 +58,8 @@ CREATE POLICY "Project members can create tasks" ON public.tasks
 -- TIMESHEETS - User Owns Their Data
 -- ============================================
 DROP POLICY IF EXISTS "Authenticated users can view timesheets" ON public.timesheets;
+DROP POLICY IF EXISTS "Users can view relevant timesheets" ON public.timesheets;
+DROP POLICY IF EXISTS "Managers can update timesheets" ON public.timesheets;
 
 -- Users can only view their own timesheets OR timesheets in their projects (if manager)
 CREATE POLICY "Users can view relevant timesheets" ON public.timesheets
@@ -82,6 +88,9 @@ CREATE POLICY "Managers can update timesheets" ON public.timesheets
 -- NCR REPORTS - Project Based
 -- ============================================
 DROP POLICY IF EXISTS "Authenticated users can view ncrs" ON public.ncr_reports;
+DROP POLICY IF EXISTS "Project members can view ncrs" ON public.ncr_reports;
+DROP POLICY IF EXISTS "Project members can create ncrs" ON public.ncr_reports;
+DROP POLICY IF EXISTS "Assigned users and QA can update ncrs" ON public.ncr_reports;
 
 CREATE POLICY "Project members can view ncrs" ON public.ncr_reports
   FOR SELECT USING (
@@ -111,6 +120,8 @@ CREATE POLICY "Assigned users and QA can update ncrs" ON public.ncr_reports
 -- CONTRACTS - Project Based
 -- ============================================
 DROP POLICY IF EXISTS "Authenticated users can view contracts" ON public.contracts;
+DROP POLICY IF EXISTS "Project members can view contracts" ON public.contracts;
+DROP POLICY IF EXISTS "Admins and managers can manage contracts" ON public.contracts;
 
 CREATE POLICY "Project members can view contracts" ON public.contracts
   FOR SELECT USING (
@@ -133,6 +144,9 @@ CREATE POLICY "Admins and managers can manage contracts" ON public.contracts
 -- SAFETY INCIDENTS - Project Based
 -- ============================================
 DROP POLICY IF EXISTS "Authenticated users can view incidents" ON public.safety_incidents;
+DROP POLICY IF EXISTS "Project members can view incidents" ON public.safety_incidents;
+DROP POLICY IF EXISTS "Project members can report incidents" ON public.safety_incidents;
+DROP POLICY IF EXISTS "HSE officers can update incidents" ON public.safety_incidents;
 
 CREATE POLICY "Project members can view incidents" ON public.safety_incidents
   FOR SELECT USING (
@@ -161,6 +175,7 @@ CREATE POLICY "HSE officers can update incidents" ON public.safety_incidents
 -- DOCUMENTS - Project Based
 -- ============================================
 DROP POLICY IF EXISTS "Users can view documents" ON public.documents;
+DROP POLICY IF EXISTS "Project members can view documents" ON public.documents;
 
 CREATE POLICY "Project members can view documents" ON public.documents
   FOR SELECT USING (
@@ -206,6 +221,9 @@ CREATE POLICY "Finance roles can manage cost tracking" ON public.project_cost_tr
 -- NOTIFICATIONS - User Private Data
 -- ============================================
 DROP POLICY IF EXISTS "Users can view their notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Users can only view their notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Users can update their notifications" ON public.notifications;
+DROP POLICY IF EXISTS "System can create notifications" ON public.notifications;
 
 CREATE POLICY "Users can only view their notifications" ON public.notifications
   FOR SELECT USING (user_id = auth.uid());
@@ -220,6 +238,8 @@ CREATE POLICY "System can create notifications" ON public.notifications
 -- REPORTS - Project Based
 -- ============================================
 DROP POLICY IF EXISTS "Users can view reports" ON public.reports;
+DROP POLICY IF EXISTS "Project members can view reports" ON public.reports;
+DROP POLICY IF EXISTS "Project members can create reports" ON public.reports;
 
 CREATE POLICY "Project members can view reports" ON public.reports
   FOR SELECT USING (
