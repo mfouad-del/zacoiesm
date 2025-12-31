@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from './lib/api';
 import { auditLogger } from './lib/audit/logger';
-import { Language, Project, Contract, Variation, PlanningTask, Report, NCR, Document, Timesheet, Incident } from './types';
-import { Toaster } from 'react-hot-toast';
+import { Language, Project, Contract, Variation, PlanningTask, Report, NCR, Document, Timesheet, Incident, User, UserRole, Expense, Resource } from './types';
+import { MOCK_REPORTS, MOCK_NCRS, MOCK_INCIDENTS, MOCK_DOCUMENTS, MOCK_EXPENSES, MOCK_RESOURCES, MOCK_TIMESHEETS } from './lib/mockData';
+import { Toaster, toast } from 'react-hot-toast';
 import DashboardView from './components/DashboardView';
 import ProjectsView from './components/ProjectsView';
 import ContractsView from './components/ContractsView';
@@ -15,6 +16,10 @@ import CostsView from './components/CostsView';
 import TimesheetsView from './components/TimesheetsView';
 import SettingsView from './components/SettingsView';
 import AuditTrailView from './components/AuditTrailView';
+import ProcurementView from './components/ProcurementView';
+import InventoryView from './components/InventoryView';
+import CorrespondenceView from './components/CorrespondenceView';
+import BIMView from './components/BIMView';
 import LoginView from './components/LoginView';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -37,6 +42,20 @@ const App: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+
+  const [user, setUser] = useState<User>({
+    id: '1',
+    name: 'م. أحمد علي',
+    email: 'ahmed.ali@example.com',
+    role: UserRole.SUPER_ADMIN,
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed'
+  });
+
+  const handleSearch = (query: string) => {
+    console.log('Searching for:', query);
+  };
 
   // --- الحالة المركزية المستمرة (Persistent Global State) ---
 
@@ -77,17 +96,22 @@ const App: React.FC = () => {
             id: t.id,
             name: t.title,
             progress: t.status === 'completed' ? 100 : (t.status === 'in_progress' ? 50 : 0),
-            start: Math.floor(Math.random() * 40), // Visual placeholder
-            end: 40 + Math.floor(Math.random() * 40), // Visual placeholder
-            critical: t.priority === 'urgent' || t.priority === 'high'
+            startDate: t.start_date || new Date().toISOString().split('T')[0],
+            endDate: t.end_date || new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0],
+            duration: t.duration || 30,
+            status: t.status || 'not_started',
+            critical: t.priority === 'urgent' || t.priority === 'high',
+            assignee: t.assignee
         }));
         setPlanningTasks(mappedPlanning);
 
-        setReports(reportsData);
-        setNcrs(ncrsData);
-        setDocuments(documentsData);
-        setTimesheets(timesheetsData);
-        setIncidents(incidentsData);
+        setReports(reportsData.length > 0 ? reportsData : MOCK_REPORTS);
+        setNcrs(ncrsData.length > 0 ? ncrsData : MOCK_NCRS);
+        setDocuments(documentsData.length > 0 ? documentsData : MOCK_DOCUMENTS);
+        setTimesheets(timesheetsData.length > 0 ? timesheetsData : MOCK_TIMESHEETS);
+        setIncidents(incidentsData.length > 0 ? incidentsData : MOCK_INCIDENTS);
+        setExpenses(MOCK_EXPENSES);
+        setResources(MOCK_RESOURCES);
       } catch (error) {
         console.error("Failed to load data", error);
       }
@@ -112,6 +136,7 @@ const App: React.FC = () => {
   }, [projects, contracts, variations, planningTasks, reports, ncrs, documents, timesheets, incidents]);
 
   // معالج الإضافة العام - memoized
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFormSubmit = useCallback((formData: any) => {
     const newId = Date.now().toString();
     const today = new Date().toISOString().split('T')[0];
@@ -127,7 +152,11 @@ const App: React.FC = () => {
         setVariations([{ ...formData, id: `VO-${Math.floor(Math.random() * 1000)}`, status: 'Pending', color: 'amber' }, ...variations]);
         break;
       case 'planning':
-        setPlanningTasks([...planningTasks, { ...formData, id: newId, progress: 0, critical: false }]);
+        setPlanningTasks([...planningTasks, { 
+            ...formData, 
+            id: newId, 
+            duration: Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 60 * 60 * 24))
+        }]);
         break;
       case 'report':
         setReports([{ ...formData, id: newId, date: today }, ...reports]);
@@ -136,17 +165,23 @@ const App: React.FC = () => {
         setNcrs([{ ...formData, id: `NCR-${Math.floor(Math.random() * 1000)}`, status: 'open', date: today }, ...ncrs]);
         break;
       case 'doc':
-        setDocuments([{ ...formData, date: today, status: 'Pending' }, ...documents]);
+        setDocuments([{ ...formData, id: `DOC-${Math.floor(Math.random() * 1000)}`, date: today, size: '0 MB' }, ...documents]);
         break;
       case 'timesheet':
         setTimesheets([{ ...formData, id: newId, status: 'Pending' }, ...timesheets]);
         break;
       case 'incident':
-        setIncidents([{ ...formData, id: newId, date: today }, ...incidents]);
+        setIncidents([{ ...formData, id: `INC-${Math.floor(Math.random() * 1000)}`, status: 'Investigating' }, ...incidents]);
+        break;
+      case 'expense':
+        setExpenses([{ ...formData, id: `EXP-${Math.floor(Math.random() * 1000)}`, status: 'Pending' }, ...expenses]);
+        break;
+      case 'resource':
+        setResources([{ ...formData, id: `RES-${Math.floor(Math.random() * 1000)}`, usedQuantity: 0 }, ...resources]);
         break;
     }
     setIsModalOpen(false);
-  }, [modalType, projects, contracts, variations, planningTasks, reports, ncrs, documents, timesheets, incidents]);
+  }, [modalType, projects, contracts, variations, planningTasks, reports, ncrs, documents, timesheets, incidents, expenses, resources]);
 
   // Open modal with specific type - memoized
   const openModal = useCallback((type: string) => {
@@ -172,18 +207,31 @@ const App: React.FC = () => {
 
   const renderModule = () => {
     switch (activeModule) {
-      case 'dashboard': return <DashboardView projects={projects} lang={lang} incidentsCount={incidents.length} />;
-      case 'projects': return <ProjectsView projects={projects} lang={lang} onAddProject={() => openModal('project')} />;
-      case 'contracts': return <ContractsView lang={lang} contracts={contracts} variations={variations} onAddVO={() => openModal('variation')} />;
+      case 'dashboard': return <DashboardView 
+        projects={projects} 
+        lang={lang} 
+        incidentsCount={incidents.length} 
+        contracts={contracts}
+        variations={variations}
+        ncrs={ncrs}
+        reports={reports}
+        timesheets={timesheets}
+      />;
+      case 'projects': return <ProjectsView projects={user.role === UserRole.CLIENT_VIEWER ? projects.filter(p => p.status === 'active').slice(0, 3) : projects} lang={lang} onAddProject={() => user.role === UserRole.CLIENT_VIEWER ? toast.error(lang === 'ar' ? 'ليس لديك صلاحية' : 'Access Denied') : openModal('project')} readOnly={user.role === UserRole.CLIENT_VIEWER} />;
+      case 'contracts': return <ContractsView lang={lang} contracts={contracts} variations={variations} onAddVO={() => openModal('variation')} onAddContract={() => openModal('contract')} />;
       case 'planning': return <PlanningView lang={lang} activities={planningTasks} onAddActivity={() => openModal('planning')} />;
       case 'site': return <SiteManagementView lang={lang} reports={reports} onAddReport={() => openModal('report')} />;
       case 'quality': return <QualityView lang={lang} ncrs={ncrs} onAddNCR={() => openModal('ncr')} onUpdateStatus={updateNCRStatus} />;
       case 'safety': return <SafetyView lang={lang} incidents={incidents} onAddIncident={() => openModal('incident')} />;
       case 'documents': return <DocumentsView lang={lang} documents={documents} onAddDoc={() => openModal('doc')} />;
-      case 'costs': return <CostsView lang={lang} projects={projects} />;
+      case 'costs': return <CostsView lang={lang} projects={projects} expenses={expenses} resources={resources} onAddExpense={() => openModal('expense')} onAddResource={() => openModal('resource')} />;
       case 'timesheets': return <TimesheetsView lang={lang} entries={timesheets} onAddEntry={() => openModal('timesheet')} onApprove={approveTimesheet} />;
+      case 'procurement': return <ProcurementView lang={lang} projects={projects} userRole={user.role} />;
+      case 'inventory': return <InventoryView lang={lang} />;
+      case 'correspondence': return <CorrespondenceView lang={lang} />;
+      case 'bim': return <BIMView lang={lang} />;
       case 'audit': return <AuditTrailView lang={lang} />;
-      case 'settings': return <SettingsView lang={lang} />;
+      case 'settings': return <SettingsView lang={lang} user={user} onUpdateUser={setUser} />;
       default: return null;
     }
   };
@@ -195,9 +243,16 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen flex ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
       <Toaster position={lang === 'ar' ? 'top-right' : 'top-left'} />
-      <Sidebar isOpen={isSidebarOpen} activeModule={activeModule} setActiveModule={setActiveModule} lang={lang} />
+      <Sidebar isOpen={isSidebarOpen} activeModule={activeModule} setActiveModule={setActiveModule} lang={lang} user={user} />
       <div className="flex-1 flex flex-col min-w-0 bg-gray-50 overflow-hidden">
-        <Header lang={lang} setLang={setLang} setSidebarOpen={setSidebarOpen} isSidebarOpen={isSidebarOpen} />
+        <Header 
+          lang={lang} 
+          setLang={setLang} 
+          setSidebarOpen={setSidebarOpen} 
+          isSidebarOpen={isSidebarOpen} 
+          user={user}
+          onSearch={handleSearch}
+        />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {renderModule()}
         </main>

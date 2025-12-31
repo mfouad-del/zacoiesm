@@ -1,21 +1,26 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { createClient } from '../lib/supabase/client';
 import { api } from '../lib/api';
-import { Project } from '../types';
+import { 
+  Project, Contract, Variation, PlanningTask, Report, NCR, 
+  Document, Timesheet, Incident, Notification, User 
+} from '../types';
 
 interface AppState {
-  user: any;
+  user: User | null;
   isAuthenticated: boolean;
   projects: Project[];
-  contracts: any[];
-  variations: any[];
-  planningTasks: any[];
-  reports: any[];
-  ncrs: any[];
-  documents: any[];
-  timesheets: any[];
-  incidents: any[];
-  notifications: any[];
+  contracts: Contract[];
+  variations: Variation[];
+  planningTasks: PlanningTask[];
+  reports: Report[];
+  ncrs: NCR[];
+  documents: Document[];
+  timesheets: Timesheet[];
+  incidents: Incident[];
+  notifications: Notification[];
   isLoading: boolean;
 }
 
@@ -51,9 +56,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     isLoading: true
   });
 
-  const refreshData = async () => {
-    if (!state.isAuthenticated) return;
-    
+  const refreshData = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true }));
     
     try {
@@ -81,7 +84,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       setState(prev => ({
         ...prev,
-        projects: projectsData.map((p: any) => ({
+        projects: (projectsData as Record<string, any>[]).map((p) => ({
           id: p.id,
           name: p.name,
           code: p.name.substring(0, 3).toUpperCase() + '-' + p.id.substring(0, 3).toUpperCase(),
@@ -93,8 +96,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           location: p.location,
           manager: p.project_manager?.full_name || 'N/A'
         })),
-        contracts: contractsData,
-        planningTasks: tasksData.map((t: any) => ({
+        contracts: contractsData as Contract[],
+        planningTasks: (tasksData as Record<string, any>[]).map((t) => ({
           id: t.id,
           projectId: t.project_id,
           name: t.title,
@@ -104,8 +107,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status: t.status,
           critical: t.priority === 'urgent' || t.priority === 'high'
         })),
-        reports: reportsData,
-        ncrs: ncrsData.map((n: any) => ({
+        reports: reportsData as Report[],
+        ncrs: (ncrsData as Record<string, any>[]).map((n) => ({
           id: n.ncr_number,
           projectId: n.project_id,
           title: n.title,
@@ -114,17 +117,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status: n.status.toLowerCase(),
           date: n.issued_date || n.created_at
         })),
-        documents: documentsData,
-        timesheets: timesheetsData,
-        incidents: incidentsData,
-        notifications: notificationsData,
+        documents: documentsData as Document[],
+        timesheets: timesheetsData as Timesheet[],
+        incidents: incidentsData as Incident[],
+        notifications: notificationsData as Notification[],
         isLoading: false
       }));
     } catch (error) {
       console.error('Failed to refresh data:', error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
-  };
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -160,7 +163,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [refreshData]);
 
   const addProject = async (project: any) => {
     const { data } = await api.projects.create(project);

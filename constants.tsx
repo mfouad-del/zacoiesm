@@ -11,7 +11,11 @@ import {
   DollarSign, 
   Clock, 
   Activity,
-  Settings 
+  Settings,
+  ShoppingCart,
+  Box,
+  Mail,
+  BoxSelect
 } from 'lucide-react';
 
 export const TRANSLATIONS = {
@@ -26,6 +30,10 @@ export const TRANSLATIONS = {
     documents: 'Documents',
     costs: 'Costs & Resources',
     timesheets: 'Timesheets',
+    procurement: 'Procurement',
+    inventory: 'Inventory',
+    correspondence: 'Correspondence',
+    bim: 'BIM Viewer',
     audit: 'Audit Trail',
     settings: 'Settings',
     totalBudget: 'Total Budget',
@@ -122,8 +130,7 @@ export const TRANSLATIONS = {
     safety: 'السلامة (HSE)',
     documents: 'المستندات',
     costs: 'التكاليف والموارد',
-    timesheets: 'الجداول الزمنية',
-    audit: 'سجل النشاطات',
+    timesheets: 'الجداول الزمنية',    procurement: 'المشتريات',    audit: 'سجل النشاطات',
     settings: 'الإعدادات',
     totalBudget: 'إجمالي الميزانية',
     activeProjects: 'المشاريع النشطة',
@@ -207,7 +214,10 @@ export const TRANSLATIONS = {
     addNew: 'إضافة جديد',
     high: 'عالية',
     medium: 'متوسطة',
-    low: 'منخفضة'
+    low: 'منخفضة',
+    inventory: 'المخزون',
+    correspondence: 'المراسلات',
+    bim: 'نمذجة المعلومات (BIM)'
   }
 };
 
@@ -221,6 +231,10 @@ export const MENU_ITEMS = [
   { id: 'safety', icon: <ShieldAlert size={20} />, labelKey: 'safety' },
   { id: 'documents', icon: <Files size={20} />, labelKey: 'documents' },
   { id: 'costs', icon: <DollarSign size={20} />, labelKey: 'costs' },
+  { id: 'procurement', icon: <ShoppingCart size={20} />, labelKey: 'procurement' },
+  { id: 'inventory', icon: <Box size={20} />, labelKey: 'inventory' },
+  { id: 'correspondence', icon: <Mail size={20} />, labelKey: 'correspondence' },
+  { id: 'bim', icon: <BoxSelect size={20} />, labelKey: 'bim' },
   { id: 'timesheets', icon: <Clock size={20} />, labelKey: 'timesheets' },
   { id: 'audit', icon: <Activity size={20} />, labelKey: 'audit' },
   { id: 'settings', icon: <Settings size={20} />, labelKey: 'settings' },

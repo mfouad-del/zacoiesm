@@ -1,17 +1,30 @@
 import React, { useState, useMemo } from 'react';
-import { Project, Language } from '../types';
+import { Project, Language, Contract, Variation, NCR, Report, Timesheet } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, AlertCircle, CheckCircle2, DollarSign, ArrowUpRight, Plus, Calendar, Activity } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { TrendingUp, AlertCircle, CheckCircle2, DollarSign, ArrowUpRight, Plus, Calendar, Activity, Users, FileText, ShieldAlert } from 'lucide-react';
 import EVMDashboard from './EVMDashboard';
 
 interface DashboardViewProps {
   projects: Project[];
   lang: Language;
   incidentsCount: number;
+  contracts: Contract[];
+  variations: Variation[];
+  ncrs: NCR[];
+  reports: Report[];
+  timesheets: Timesheet[];
 }
 
-const StatCard = ({ title, value, icon, color, trend }: any) => {
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+  trend: string;
+}
+
+const StatCard = ({ title, value, icon, color, trend }: StatCardProps) => {
   const colorMap: Record<string, string> = {
     blue: 'bg-blue-600 shadow-blue-500/20',
     indigo: 'bg-indigo-600 shadow-indigo-500/20',
@@ -37,11 +50,15 @@ const StatCard = ({ title, value, icon, color, trend }: any) => {
   );
 };
 
-const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidentsCount }) => {
+const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidentsCount, contracts, variations, ncrs, reports, timesheets: _timesheets }) => {
   const t = TRANSLATIONS[lang];
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(
     projects.length > 0 ? projects[0].id : undefined
   );
+
+  const totalContractValue = useMemo(() => contracts.reduce((acc, c) => acc + c.value, 0), [contracts]);
+  const openNCRs = useMemo(() => ncrs.filter(n => n.status === 'open').length, [ncrs]);
+  const activeLabor = useMemo(() => reports.reduce((acc, r) => acc + r.laborCount, 0), [reports]);
 
   const chartData = useMemo(
     () => projects.map(p => ({
@@ -86,10 +103,17 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title={t.totalBudget} value={`$${(projects.reduce((acc, p) => acc + p.budget, 0) / 1000000).toFixed(1)}M`} icon={<DollarSign size={20} />} color="blue" trend="↑ 12%" />
+        <StatCard title={t.totalBudget} value={`$${(totalContractValue / 1000000).toFixed(1)}M`} icon={<DollarSign size={20} />} color="blue" trend="↑ 12%" />
         <StatCard title={t.activeProjects} value={projects.length} icon={<TrendingUp size={20} />} color="indigo" trend="↑ 4" />
         <StatCard title={t.overallProgress} value={`${(projects.reduce((acc, p) => acc + p.progress, 0) / projects.length || 0).toFixed(0)}%`} icon={<CheckCircle2 size={20} />} color="emerald" trend="↑ 8%" />
         <StatCard title={t.safetyIncidents} value={incidentsCount} icon={<AlertCircle size={20} />} color="amber" trend="↓ 2" />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title={lang === 'ar' ? 'العمالة النشطة' : 'Active Labor'} value={activeLabor} icon={<Users size={20} />} color="blue" trend="↑ 5%" />
+        <StatCard title={lang === 'ar' ? 'تقارير عدم المطابقة' : 'Open NCRs'} value={openNCRs} icon={<ShieldAlert size={20} />} color="amber" trend={openNCRs > 0 ? "↑" : "-"} />
+        <StatCard title={lang === 'ar' ? 'العقود' : 'Contracts'} value={contracts.length} icon={<FileText size={20} />} color="indigo" trend="-" />
+        <StatCard title={lang === 'ar' ? 'أوامر التغيير' : 'Variations'} value={variations.length} icon={<ArrowUpRight size={20} />} color="emerald" trend="↑" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

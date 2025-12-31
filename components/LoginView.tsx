@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Mail, Loader2, ShieldAlert, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { seedAdmin } from '../lib/api';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { secureStorage, checkRateLimit, generateCSRFToken } from '../lib/utils/security';
@@ -64,9 +64,10 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         toast.success('تم تسجيل الدخول بنجاح');
         onLoginSuccess();
       }
-    } catch (err: any) {
-      setError(err.message || 'فشل تسجيل الدخول');
-      toast.error(err.message || 'فشل تسجيل الدخول');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'فشل تسجيل الدخول';
+      setError(message);
+      toast.error(message);
       // Reset captcha on error
       captchaRef.current?.resetCaptcha();
       setHcaptchaToken(null);
@@ -82,8 +83,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       try {
           await seedAdmin();
           setMsg('Admin user seeded. You can now login with admin@zaco.sa / admin123');
-      } catch (err: any) {
-          setError('Failed to seed admin: ' + err.message);
+      } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          setError('Failed to seed admin: ' + message);
       } finally {
           setSeeding(false);
       }

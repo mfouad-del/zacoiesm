@@ -1,46 +1,62 @@
 import React from 'react';
 import { MENU_ITEMS, TRANSLATIONS } from '../constants';
-import { Language } from '../types';
+import { Language, User, UserRole } from '../types';
 
 interface SidebarProps {
   isOpen: boolean;
   activeModule: string;
   setActiveModule: (id: string) => void;
   lang: Language;
-  user?: any;
+  user?: User;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule, lang, user }) => {
   const t = TRANSLATIONS[lang];
 
   const getUserName = () => {
-    if (user?.user_metadata?.full_name) return user.user_metadata.full_name;
-    if (user?.email === 'admin@zaco.sa') return lang === 'ar' ? 'مدير النظام' : 'System Administrator';
-    return lang === 'ar' ? 'مستخدم' : 'User';
+    return user?.name || (lang === 'ar' ? 'مستخدم' : 'User');
   };
 
   const getUserRole = () => {
-    if (user?.user_metadata?.role) return user.user_metadata.role;
-    if (user?.email === 'admin@zaco.sa') return lang === 'ar' ? 'مسؤول النظام' : 'Super Admin';
-    return lang === 'ar' ? 'عضو' : 'Member';
+    return user?.role || (lang === 'ar' ? 'عضو' : 'Member');
   };
+
+  const getFilteredMenuItems = () => {
+    if (!user) return MENU_ITEMS;
+
+    if (user.role === UserRole.CLIENT_VIEWER) {
+      return MENU_ITEMS.filter(item => 
+        ['dashboard', 'projects', 'documents', 'site'].includes(item.id)
+      );
+    }
+    
+    if (user.role === UserRole.PROCUREMENT_MANAGER) {
+       return MENU_ITEMS.filter(item => 
+        ['dashboard', 'procurement', 'projects', 'contracts', 'costs', 'settings'].includes(item.id)
+      );
+    }
+
+    return MENU_ITEMS;
+  };
+
+  const filteredItems = getFilteredMenuItems();
 
   return (
     <aside className={`sidebar-gradient text-slate-300 transition-all duration-300 ease-in-out z-40 relative flex flex-col border-slate-800 ${isOpen ? 'w-72' : 'w-20 overflow-hidden md:w-20'}`}>
-      <div className="p-6 flex items-center gap-4 h-20 shrink-0 border-b border-white/5">
-        <div className="w-10 h-10 shrink-0">
-           <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Logo" className="w-full h-full object-contain" />
-        </div>
-        {isOpen && (
-          <div className="flex flex-col">
-            <span className="font-extrabold text-lg text-white tracking-tight">IEMS Pro</span>
-            <span className="text-[10px] text-brand-400 font-bold uppercase tracking-widest leading-none mt-0.5">Systems Engine</span>
+      <div className="p-6 flex items-center justify-center h-24 shrink-0 border-b border-white/5 bg-white/5">
+        {isOpen ? (
+           <div className="w-full h-full flex items-center justify-center bg-white rounded-xl p-2 shadow-lg shadow-black/10">
+             <img src={`${import.meta.env.BASE_URL}logo.png`} alt="IEMS Pro" className="w-full h-full object-contain" />
+           </div>
+        ) : (
+          <div className="w-10 h-10 shrink-0 bg-white rounded-lg p-1">
+             <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Logo" className="w-full h-full object-contain" />
           </div>
         )}
       </div>
       
       <nav className="flex-1 px-3 space-y-1.5 py-6 overflow-y-auto">
-        {MENU_ITEMS.map((item) => (
+        {filteredItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveModule(item.id)}
@@ -71,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule
         {isOpen ? (
           <div className="flex items-center gap-3 p-2">
             <div className="w-10 h-10 rounded-full border-2 border-brand-500/30 overflow-hidden shrink-0">
-              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`} alt="User" />
+              <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`} alt="User" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col min-w-0">
               <p className="text-xs font-bold text-white truncate">{getUserName()}</p>
@@ -81,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule
         ) : (
           <div className="flex justify-center py-2">
              <div className="w-10 h-10 rounded-full border-2 border-brand-500/30 overflow-hidden shrink-0">
-              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`} alt="User" />
+              <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`} alt="User" className="w-full h-full object-cover" />
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { Request, Response, NextFunction } from 'express';
 import { AuthService, UserPayload } from '../modules/auth/auth.service';
-import { UserRole, PERMISSIONS } from '../core/constants/roles';
+import { PERMISSIONS } from '../core/constants/roles';
 
 // Extend Express Request to include user
 declare global {
@@ -23,7 +23,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     const decoded = AuthService.verifyToken(token);
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ message: 'Invalid token' });
   }
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Helper to get token
@@ -212,10 +213,27 @@ export async function changePassword(password: string) {
         headers: getHeaders(),
         body: JSON.stringify({ password })
     });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to change password');
-    }
     return response.json();
 }
+
+// ============================================
+// PROCUREMENT API
+// ============================================
+export const procurementApi = {
+    async listOrders() {
+        return fetchResource('procurement/orders');
+    },
+    async createOrder(data: any) {
+        return createResource('procurement/orders', data);
+    },
+    async updateOrder(id: string, data: any) {
+        return updateResource('procurement/orders', id, data);
+    },
+    async listSuppliers() {
+        return fetchResource('procurement/suppliers');
+    },
+    async createSupplier(data: any) {
+        return createResource('procurement/suppliers', data);
+    }
+};
 

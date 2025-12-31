@@ -15,7 +15,53 @@ export enum UserRole {
   TOP_MANAGEMENT = 'top_management',
   CLIENT = 'client',
   VIEWER = 'viewer',
-  USER = 'user'
+  USER = 'user',
+  PROCUREMENT_MANAGER = 'procurement_manager',
+  CLIENT_VIEWER = 'client_viewer'
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string;
+  allowedProjects?: string[]; // For Client Viewer
+}
+
+export interface ProcurementOrder {
+  id: string;
+  orderNumber: string;
+  projectId: string;
+  supplierId: string;
+  items: ProcurementItem[];
+  totalAmount: number;
+  status: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'ordered' | 'delivered';
+  requestDate: string;
+  deliveryDate?: string;
+  requestedBy: string;
+  approvedBy?: string;
+  notes?: string;
+}
+
+export interface ProcurementItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  address: string;
+  rating?: number;
+  status: 'active' | 'inactive';
 }
 
 export interface Project {
@@ -27,6 +73,11 @@ export interface Project {
   progress: number;
   startDate: string;
   endDate: string;
+  client?: string;
+  manager?: string;
+  location?: string;
+  priority?: 'high' | 'medium' | 'low';
+  description?: string;
 }
 
 export interface Contract {
@@ -55,7 +106,9 @@ export interface Variation {
   title: string;
   value: number | string;
   status: string;
-  color: string;
+  color?: string;
+  description?: string;
+  scheduleImpact?: number;
 }
 
 export interface PlanningTask {
@@ -63,8 +116,13 @@ export interface PlanningTask {
   name: string;
   progress: number;
   critical: boolean;
-  start: number;
-  end: number;
+  startDate: string;
+  endDate: string;
+  duration: number;
+  status: 'not_started' | 'in_progress' | 'completed' | 'delayed';
+  assignee?: string;
+  dependencies?: string[];
+  projectId?: string;
 }
 
 export interface Report {
@@ -74,36 +132,119 @@ export interface Report {
   activities: string;
   laborCount: number;
   equipmentCount: number;
+  weather?: {
+    temp: number;
+    condition: string;
+    humidity?: number;
+    windSpeed?: number;
+  };
+  manpower?: {
+    trade: string;
+    count: number;
+    hours: number;
+  }[];
+  equipment?: {
+    type: string;
+    count: number;
+    status: 'active' | 'idle' | 'maintenance';
+  }[];
+  materials?: {
+    item: string;
+    quantity: number;
+    unit: string;
+    supplier?: string;
+  }[];
+  safetyObservations?: string[];
+  delays?: string[];
+  photos?: string[];
+  supervisor?: string;
 }
 
 export interface NCR {
   id: string;
   title: string;
   severity: 'high' | 'medium' | 'low';
-  status: 'open' | 'closed';
+  status: 'open' | 'closed' | 'pending_review';
+  date: string;
+  location?: string;
+  description?: string;
+  rootCause?: string;
+  correctiveAction?: string;
+  preventiveAction?: string;
+  inspector?: string;
+  dueDate?: string;
+  closureDate?: string;
+  images?: string[];
+  projectId?: string;
 }
 
 export interface Document {
+  id: string;
   code: string;
   title: string;
+  category: 'Drawing' | 'RFI' | 'Submittal' | 'Contract' | 'Report' | 'Specification' | 'Other';
+  type: 'PDF' | 'DWG' | 'XLSX' | 'DOCX' | 'JPG';
   version: string;
+  status: 'Approved' | 'Pending' | 'Rejected' | 'Superseded';
   date: string;
-  status: string;
+  size: string;
+  uploadedBy: string;
+  description?: string;
+  tags?: string[];
+  projectId?: string;
+}
+
+export interface Expense {
+  id: string;
+  projectId: string;
+  category: 'Material' | 'Labor' | 'Equipment' | 'Subcontractor' | 'Overhead' | 'Other';
+  description: string;
+  amount: number;
+  date: string;
+  status: 'Pending' | 'Approved' | 'Paid' | 'Rejected';
+  invoiceNumber?: string;
+  vendor?: string;
+}
+
+export interface Resource {
+  id: string;
+  name: string;
+  type: 'Labor' | 'Equipment' | 'Material';
+  unit: string;
+  costPerUnit: number;
+  totalQuantity: number;
+  usedQuantity: number;
+  projectId?: string;
 }
 
 export interface Timesheet {
   id: string;
   employee: string;
+  role?: string;
   project: string;
+  date: string;
   hours: number;
-  status: 'Approved' | 'Pending';
+  overtime?: number;
+  activity?: string;
+  status: 'Approved' | 'Pending' | 'Rejected';
 }
 
 export interface Incident {
   id: string;
   date: string;
-  severity: 'high' | 'medium' | 'low';
-  desc: string;
+  type: 'Injury' | 'Near Miss' | 'Property Damage' | 'Environmental' | 'Hazard';
+  severity: 'Critical' | 'High' | 'Medium' | 'Low';
+  description: string;
+  location: string;
+  involvedPersons?: string;
+  witnesses?: string;
+  rootCause?: string;
+  immediateAction?: string;
+  correctiveAction?: string;
+  status: 'Open' | 'Investigating' | 'Closed';
+  lostTimeHours?: number;
+  images?: string[];
+  projectId?: string;
 }
 
 export interface Task {
@@ -135,4 +276,68 @@ export interface DailyReport {
   equipmentCount: number;
   activities: string;
   issues: string;
+}
+
+// Inventory
+export interface InventoryItem {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  minLevel: number;
+  location: string;
+  lastUpdated: string;
+}
+
+export interface StockTransaction {
+  id: string;
+  itemId: string;
+  type: 'in' | 'out' | 'adjustment';
+  quantity: number;
+  date: string;
+  reference: string; // PO number or Project ID
+  performedBy: string;
+}
+
+// Correspondence
+export interface Transmittal {
+  id: string;
+  code: string;
+  subject: string;
+  sender: string;
+  recipient: string;
+  date: string;
+  status: 'Draft' | 'Sent' | 'Received' | 'Acknowledged';
+  type: 'Drawing' | 'Material' | 'Document' | 'Sample';
+  projectId: string;
+  attachments: string[];
+}
+
+export interface RFI {
+  id: string;
+  code: string;
+  subject: string;
+  question: string;
+  answer?: string;
+  requestedBy: string;
+  assignedTo: string;
+  date: string;
+  dueDate: string;
+  status: 'Open' | 'Answered' | 'Closed' | 'Overdue';
+  priority: 'High' | 'Medium' | 'Low';
+  projectId: string;
+  discipline: 'Civil' | 'Arch' | 'MEP' | 'Structural';
+}
+
+// BIM
+export interface BIMModel {
+  id: string;
+  name: string;
+  version: string;
+  uploadDate: string;
+  size: string;
+  url: string; // Path to .ifc file
+  projectId: string;
 }

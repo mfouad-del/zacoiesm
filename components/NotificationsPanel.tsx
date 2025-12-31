@@ -1,42 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { notificationService, Notification } from '../lib/notifications/service';
 import { Bell, Check, Trash2, CheckCheck } from 'lucide-react';
 import { createClient } from '../lib/supabase/client';
 
 interface NotificationsPanelProps {
   lang?: 'ar' | 'en';
+  userId?: string;
 }
 
-const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ lang = 'ar' }) => {
+const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ lang = 'ar', userId }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
+    let currentUserId = userId;
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    
+    if (!currentUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUserId = user?.id;
+    }
+
+    if (!currentUserId) {
+        // Fallback for demo/dev mode if no real backend user
+        setNotifications([
+            {
+                id: '1',
+                user_id: '1',
+                title: lang === 'ar' ? 'مرحباً بك' : 'Welcome',
+                message: lang === 'ar' ? 'تم تحديث النظام بنجاح' : 'System updated successfully',
+                type: 'success',
+                read: false,
+                created_at: new Date().toISOString()
+            },
+            {
+                id: '2',
+                user_id: '1',
+                title: lang === 'ar' ? 'تنبيه هام' : 'Important Alert',
+                message: lang === 'ar' ? 'يرجى مراجعة التقارير المعلقة' : 'Please review pending reports',
+                type: 'warning',
+                read: false,
+                created_at: new Date(Date.now() - 3600000).toISOString()
+            }
+        ]);
+        setUnreadCount(2);
+        return;
+    }
 
     setLoading(true);
-    const data = await notificationService.getNotifications(user.id);
+    const data = await notificationService.getNotifications(currentUserId);
     setNotifications(data);
     
-    const count = await notificationService.getUnreadCount(user.id);
+    const count = await notificationService.getUnreadCount(currentUserId);
     setUnreadCount(count);
     setLoading(false);
-  };
+  }, [userId, lang]);
 
-  const subscribeToNotifications = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    notificationService.subscribe(user.id, (notification) => {
-      setNotifications(prev => [notification, ...prev]);
-      setUnreadCount(prev => prev + 1);
-    });
-  };
+  const subscribeToNotifications = useCallback(async () => {
+    let currentUserId = userId;
+    if (!currentUserId) {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        currentUserId = user?.id;
+    }
+    
+    if (currentUserId) {
+      await notificationService.subscribe(currentUserId, (notification) => {
+        setNotifications(prev => [notification, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      });
+    }
+  }, [userId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -46,7 +82,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ lang = 'ar' }) 
     return () => {
       notificationService.unsubscribe();
     };
-  }, []);
+  }, [loadNotifications, subscribeToNotifications]);
 
   const handleMarkAsRead = async (id: string) => {
     await notificationService.markAsRead(id);
@@ -69,15 +105,6 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ lang = 'ar' }) 
   const handleDelete = async (id: string) => {
     await notificationService.deleteNotification(id);
     setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'success': return 'text-green-600 bg-green-100';
-      case 'error': return 'text-red-600 bg-red-100';
-      case 'warning': return 'text-amber-600 bg-amber-100';
-      default: return 'text-blue-600 bg-blue-100';
-    }
   };
 
   const formatDate = (dateString: string) => {

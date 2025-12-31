@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, File, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { uploadFile, validateFile } from '../lib/storage/upload';
 import toast from 'react-hot-toast';
 
@@ -45,8 +45,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
           setUploadedFiles(prev => [...prev, { name: file.name, url: result.url, status: 'success' }]);
           onUploadComplete?.(result.path, result.url);
         }
-      } catch (error: any) {
-        toast.error(error.message || 'فشل رفع الملف');
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'فشل رفع الملف';
+        toast.error(msg);
         setUploadedFiles(prev => [...prev, { name: file.name, url: '', status: 'error' }]);
       }
     }

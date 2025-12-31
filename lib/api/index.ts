@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '../supabase/client';
-import { Project, Contract } from '../../types';
+import { Project } from '../../types';
 
 export interface ApiResponse<T> {
   data: T | null;
@@ -290,7 +291,7 @@ export const documentsApi = {
     // Upload file to storage
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}.${fileExt}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(fileName, file);
     

@@ -41,16 +41,12 @@ interface EVMDashboardProps {
   lang?: 'ar' | 'en';
 }
 
-const EVMDashboard: React.FC<EVMDashboardProps> = ({ projectId, lang = 'ar' }) => {
+const EVMDashboard: React.FC<EVMDashboardProps> = ({ projectId, lang: _lang = 'ar' }) => {
   const [metrics, setMetrics] = useState<EVMMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadEVMMetrics();
-  }, [projectId]);
-
-  const loadEVMMetrics = async () => {
+  const loadEVMMetrics = useCallback(async () => {
     if (!projectId) return;
     
     setIsLoading(true);
@@ -86,7 +82,11 @@ const EVMDashboard: React.FC<EVMDashboardProps> = ({ projectId, lang = 'ar' }) =
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [projectId]);
+
+  useEffect(() => {
+    loadEVMMetrics();
+  }, [loadEVMMetrics]);
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('ar-SA', {

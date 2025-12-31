@@ -2,6 +2,7 @@
  * Real-time Notifications System
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '../supabase/client';
 import toast from 'react-hot-toast';
 

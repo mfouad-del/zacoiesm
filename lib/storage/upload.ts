@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * File Upload System - Cloudflare R2 (via Backend Presigned URLs)
  */
@@ -97,12 +98,12 @@ export const uploadFile = async (
 };
 
 // Note: Delete and List operations should also be moved to backend
-export const deleteFile = async (path: string): Promise<boolean> => {
+export const deleteFile = async (_path: string): Promise<boolean> => {
   console.warn('Delete operation requires backend implementation');
   return false; 
 };
 
-export const listFiles = async (folder: string = 'uploads'): Promise<any[]> => {
+export const listFiles = async (_folder: string = 'uploads'): Promise<any[]> => {
   console.warn('List operation requires backend implementation');
   return [];
 };

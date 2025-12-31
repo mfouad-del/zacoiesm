@@ -3,6 +3,7 @@
  * Logs all critical operations to activity_logs table
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '../supabase/client';
 
 export type AuditAction = 
