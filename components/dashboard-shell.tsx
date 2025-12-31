@@ -3,8 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -32,7 +31,13 @@ import {
   LogOut,
   Settings,
 } from "lucide-react"
-import { signOut } from "@/lib/actions/auth"
+import { createClient } from "@/lib/supabase/client"
+
+const supabase = createClient()
+const signOut = async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+}
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -57,7 +62,7 @@ const adminNavigation = [{ name: "Users", href: "/dashboard/users", icon: Users 
 
 export function DashboardShell({ children, user }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const isAdmin = user.role === "super_admin" || user.role === "admin"
 
   const allNavigation = isAdmin ? [...navigation, ...adminNavigation] : navigation
@@ -79,7 +84,7 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
-            <Link href="/dashboard" className="flex items-center gap-3">
+            <Link to="/dashboard" className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
                 <Building2 className="h-6 w-6 text-white" />
               </div>
@@ -98,7 +103,7 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
                 return (
                   <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",

@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { fetchUsers, createUser, deleteUser, changePassword } from '../lib/api';
+import { fetchUsers, createUser, deleteUser, changePassword } from '../lib/services';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
@@ -81,7 +81,7 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
   });
 
   // Users Management State
-  const [users, setUsers] = useState<Record<string, unknown>[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [newUserForm, setNewUserForm] = useState({
     full_name: '',
@@ -223,7 +223,7 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
 
     autoTable(doc, {
       head: [['Name', 'Email', 'Role', 'Status', 'Joined']],
-      body: tableData,
+      body: tableData as any,
       startY: 40,
     });
 
@@ -428,13 +428,36 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
                           onValueChange={(v) => setNewUserForm({...newUserForm, role: v})}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
+                            <SelectValue placeholder={lang === 'ar' ? 'اختر الدور' : 'Select role'} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="engineer">Engineer</SelectItem>
-                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="super_admin">
+                              {lang === 'ar' ? 'مدير النظام' : 'Super Admin'} - {lang === 'ar' ? 'تحكم كامل' : 'Full Control'}
+                            </SelectItem>
+                            <SelectItem value="admin">
+                              {lang === 'ar' ? 'مدير' : 'Admin'} - {lang === 'ar' ? 'إدارة الشركة' : 'Company Management'}
+                            </SelectItem>
+                            <SelectItem value="project_manager">
+                              {lang === 'ar' ? 'مدير مشروع' : 'Project Manager'} - {lang === 'ar' ? 'إدارة المشاريع' : 'Project Management'}
+                            </SelectItem>
+                            <SelectItem value="site_engineer">
+                              {lang === 'ar' ? 'مهندس موقع' : 'Site Engineer'} - {lang === 'ar' ? 'التنفيذ اليومي' : 'Daily Operations'}
+                            </SelectItem>
+                            <SelectItem value="qa_manager">
+                              {lang === 'ar' ? 'مدير الجودة' : 'QA Manager'} - {lang === 'ar' ? 'مراجعات الجودة' : 'Quality Reviews'}
+                            </SelectItem>
+                            <SelectItem value="hse_officer">
+                              {lang === 'ar' ? 'مسؤول السلامة' : 'HSE Officer'} - {lang === 'ar' ? 'الصحة والسلامة' : 'Health & Safety'}
+                            </SelectItem>
+                            <SelectItem value="accountant">
+                              {lang === 'ar' ? 'محاسب' : 'Accountant'} - {lang === 'ar' ? 'إدارة التكاليف' : 'Cost Management'}
+                            </SelectItem>
+                            <SelectItem value="client">
+                              {lang === 'ar' ? 'عميل' : 'Client'} - {lang === 'ar' ? 'عرض فقط' : 'View Only (Own Projects)'}
+                            </SelectItem>
+                            <SelectItem value="viewer">
+                              {lang === 'ar' ? 'مشاهد' : 'Viewer'} - {lang === 'ar' ? 'قراءة عامة' : 'Read Only'}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

@@ -52,6 +52,7 @@ import {
   Line
 } from 'recharts';
 import { format, subDays, parseISO } from 'date-fns';
+import { ar } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
@@ -162,7 +163,7 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
     });
 
     return Object.entries(data).map(([date, count]) => ({
-      date: format(parseISO(date), 'MMM dd'),
+      date: format(parseISO(date), 'MMM dd', { locale: ar }),
       count
     }));
   }, [filteredLogs]);
@@ -235,22 +236,47 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
     }
   };
 
+  const getActionLabel = (action: string) => {
+    if (_lang !== 'ar') return action;
+    switch (action) {
+      case 'CREATE': return 'إنشاء';
+      case 'UPDATE': return 'تحديث';
+      case 'DELETE': return 'حذف';
+      case 'LOGIN': return 'تسجيل دخول';
+      case 'APPROVE': return 'موافقة';
+      default: return action;
+    }
+  };
+
+  const getEntityLabel = (entity: string) => {
+    if (_lang !== 'ar') return entity;
+    switch (entity.toLowerCase()) {
+      case 'project': return 'مشروع';
+      case 'task': return 'مهمة';
+      case 'user': return 'مستخدم';
+      case 'timesheet': return 'سجل دوام';
+      case 'document': return 'وثيقة';
+      case 'report': return 'تقرير';
+      default: return entity;
+    }
+  };
+
   return (
-    <div className="space-y-6 p-6 bg-slate-50/50 min-h-screen">
+    <div className="space-y-6 p-6 bg-slate-50/50 min-h-screen" dir="rtl">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Audit Trail</h1>
-          <p className="text-slate-500 mt-1">Monitor and track all system activities and security events.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">سجل النشاطات</h1>
+          <p className="text-slate-500 mt-1">مراقبة وتتبع جميع أنشطة النظام والأحداث الأمنية.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExportCSV} className="gap-2">
             <FileText className="h-4 w-4" />
-            Export CSV
+            تصدير CSV
           </Button>
           <Button onClick={handleExportPDF} className="gap-2 bg-slate-900 hover:bg-slate-800">
             <Download className="h-4 w-4" />
-            Export PDF
+            تصدير PDF
           </Button>
         </div>
       </div>
@@ -259,32 +285,32 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Activities</CardTitle>
+            <CardTitle className="text-sm font-medium">إجمالي الأنشطة</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalActions}</div>
-            <p className="text-xs text-muted-foreground">Recorded in selected period</p>
+            <p className="text-xs text-muted-foreground">مسجلة في الفترة المحددة</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+            <CardTitle className="text-sm font-medium">المستخدمون النشطون</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.uniqueUsers}</div>
-            <p className="text-xs text-muted-foreground">Unique users performed actions</p>
+            <p className="text-xs text-muted-foreground">مستخدمون قاموا بإجراءات</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Events</CardTitle>
+            <CardTitle className="text-sm font-medium">أحداث حرجة</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.criticalActions}</div>
-            <p className="text-xs text-muted-foreground">Updates and Deletions</p>
+            <p className="text-xs text-muted-foreground">تحديثات وحذف</p>
           </CardContent>
         </Card>
       </div>
@@ -292,11 +318,11 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
       {/* Activity Chart */}
       <Card className="col-span-4">
         <CardHeader>
-          <CardTitle>Activity Overview</CardTitle>
-          <CardDescription>System usage trends over the last 7 days</CardDescription>
+          <CardTitle>نظرة عامة على النشاط</CardTitle>
+          <CardDescription>اتجاهات استخدام النظام خلال آخر 7 أيام</CardDescription>
         </CardHeader>
         <CardContent className="pl-2">
-          <div className="h-[200px] w-full">
+          <div className="h-[200px] w-full" style={{ width: '100%', height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -337,42 +363,42 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
           <div className="flex flex-col md:flex-row justify-between gap-4">
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Activity Log
+              سجل النشاط
             </CardTitle>
             <div className="flex flex-col md:flex-row gap-2">
               <div className="relative w-full md:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search logs..."
+                  placeholder="بحث في السجلات..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
+                  className="pr-8"
                 />
               </div>
               <Select value={actionFilter} onValueChange={setActionFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Action Type" />
+                  <SelectValue placeholder="نوع الإجراء" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Actions</SelectItem>
-                  <SelectItem value="CREATE">Create</SelectItem>
-                  <SelectItem value="UPDATE">Update</SelectItem>
-                  <SelectItem value="DELETE">Delete</SelectItem>
-                  <SelectItem value="LOGIN">Login</SelectItem>
-                  <SelectItem value="APPROVE">Approve</SelectItem>
+                  <SelectItem value="ALL">كل الإجراءات</SelectItem>
+                  <SelectItem value="CREATE">إنشاء</SelectItem>
+                  <SelectItem value="UPDATE">تحديث</SelectItem>
+                  <SelectItem value="DELETE">حذف</SelectItem>
+                  <SelectItem value="LOGIN">تسجيل دخول</SelectItem>
+                  <SelectItem value="APPROVE">موافقة</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={entityFilter} onValueChange={setEntityFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Entity Type" />
+                  <SelectValue placeholder="نوع الكيان" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Entities</SelectItem>
-                  <SelectItem value="project">Project</SelectItem>
-                  <SelectItem value="task">Task</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="timesheet">Timesheet</SelectItem>
-                  <SelectItem value="document">Document</SelectItem>
+                  <SelectItem value="ALL">كل الكيانات</SelectItem>
+                  <SelectItem value="project">مشروع</SelectItem>
+                  <SelectItem value="task">مهمة</SelectItem>
+                  <SelectItem value="user">مستخدم</SelectItem>
+                  <SelectItem value="timesheet">جدول زمني</SelectItem>
+                  <SelectItem value="document">وثيقة</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -383,19 +409,19 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">التاريخ والوقت</TableHead>
+                  <TableHead className="text-right">المستخدم</TableHead>
+                  <TableHead className="text-right">الإجراء</TableHead>
+                  <TableHead className="text-right">الكيان</TableHead>
+                  <TableHead className="text-right">التفاصيل</TableHead>
+                  <TableHead className="text-left">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLogs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                      No results found.
+                      لا توجد نتائج.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -403,7 +429,7 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
                     <TableRow key={log.id}>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <span>{format(parseISO(log.created_at), 'MMM dd, yyyy')}</span>
+                          <span>{format(parseISO(log.created_at), 'MMM dd, yyyy', { locale: ar })}</span>
                           <span className="text-xs text-muted-foreground">{format(parseISO(log.created_at), 'HH:mm:ss')}</span>
                         </div>
                       </TableCell>
@@ -420,12 +446,12 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getActionColor(log.action)}>
-                          {log.action}
+                          {getActionLabel(log.action)}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="capitalize font-medium">{log.entity_type}</span>
+                          <span className="capitalize font-medium">{getEntityLabel(log.entity_type)}</span>
                           <span className="text-xs text-muted-foreground truncate max-w-[150px]" title={log.entity_name}>
                             {log.entity_name || log.entity_id}
                           </span>
@@ -436,7 +462,7 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
                           {log.ip_address ? `IP: ${log.ip_address}` : '-'}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-left">
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -445,8 +471,8 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
                             setIsDetailsOpen(true);
                           }}
                         >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
+                          <Eye className="h-4 w-4 ml-1" />
+                          عرض
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -460,11 +486,11 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
 
       {/* Details Modal */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" dir="rtl">
           <DialogHeader>
-            <DialogTitle>Audit Log Details</DialogTitle>
+            <DialogTitle>تفاصيل سجل التدقيق</DialogTitle>
             <DialogDescription>
-              Transaction ID: {selectedLog?.id}
+              معرف المعاملة: {selectedLog?.id}
             </DialogDescription>
           </DialogHeader>
           
@@ -472,48 +498,48 @@ export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewPro
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground">User</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground">المستخدم</h4>
                   <p className="text-sm font-semibold">{selectedLog.user?.full_name}</p>
                   <p className="text-xs text-muted-foreground">{selectedLog.user?.email}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground">Timestamp</h4>
-                  <p className="text-sm">{format(parseISO(selectedLog.created_at), 'PPpp')}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground">الطابع الزمني</h4>
+                  <p className="text-sm">{format(parseISO(selectedLog.created_at), 'PPpp', { locale: ar })}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground">Action</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground">الإجراء</h4>
                   <Badge variant="outline" className={getActionColor(selectedLog.action)}>
-                    {selectedLog.action}
+                    {getActionLabel(selectedLog.action)}
                   </Badge>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground">Entity</h4>
-                  <p className="text-sm capitalize">{selectedLog.entity_type}: {selectedLog.entity_name}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground">الكيان</h4>
+                  <p className="text-sm capitalize">{getEntityLabel(selectedLog.entity_type)}: {selectedLog.entity_name}</p>
                 </div>
               </div>
 
               {(selectedLog.old_values || selectedLog.new_values) && (
                 <div className="mt-4 space-y-2">
-                  <h4 className="text-sm font-medium">Changes</h4>
+                  <h4 className="text-sm font-medium">التغييرات</h4>
                   <div className="grid grid-cols-2 gap-4 rounded-lg border p-4 bg-slate-50">
                     <div>
-                      <h5 className="text-xs font-semibold text-red-600 mb-2">Old Values</h5>
+                      <h5 className="text-xs font-semibold text-red-600 mb-2">القيم القديمة</h5>
                       {selectedLog.old_values ? (
-                        <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-[200px]">
+                        <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-[200px] text-left" dir="ltr">
                           {JSON.stringify(selectedLog.old_values, null, 2)}
                         </pre>
                       ) : (
-                        <span className="text-xs text-muted-foreground italic">No previous data</span>
+                        <span className="text-xs text-muted-foreground italic">لا توجد بيانات سابقة</span>
                       )}
                     </div>
                     <div>
-                      <h5 className="text-xs font-semibold text-green-600 mb-2">New Values</h5>
+                      <h5 className="text-xs font-semibold text-green-600 mb-2">القيم الجديدة</h5>
                       {selectedLog.new_values ? (
-                        <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-[200px]">
+                        <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-[200px] text-left" dir="ltr">
                           {JSON.stringify(selectedLog.new_values, null, 2)}
                         </pre>
                       ) : (
-                        <span className="text-xs text-muted-foreground italic">No new data</span>
+                        <span className="text-xs text-muted-foreground italic">لا توجد بيانات جديدة</span>
                       )}
                     </div>
                   </div>

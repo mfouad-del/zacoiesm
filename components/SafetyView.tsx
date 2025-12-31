@@ -76,6 +76,7 @@ const SafetyView: React.FC<SafetyViewProps> = ({ lang, incidents, onAddIncident 
     // Description & Analysis
     // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
+      // @ts-expect-error: jspdf-autotable types are missing
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الوصف والتحليل' : 'Description & Analysis']],
       body: [

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Lock, Mail, Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { seedAdmin } from '../lib/api';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { secureStorage, checkRateLimit, generateCSRFToken } from '../lib/utils/security';
 import toast, { Toaster } from 'react-hot-toast';
@@ -81,8 +80,8 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       setError(null);
       setMsg(null);
       try {
-          await seedAdmin();
-          setMsg('Admin user seeded. You can now login with admin@zaco.sa / admin123');
+          // Admin seeding is now handled via SQL script
+          setMsg('Please use the provided SQL script to seed the admin user.');
       } catch (err: unknown) {
           const message = err instanceof Error ? err.message : 'Unknown error';
           setError('Failed to seed admin: ' + message);

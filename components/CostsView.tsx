@@ -86,6 +86,7 @@ const CostsView: React.FC<CostsViewProps> = ({
           name: r.name,
           type: r.category || 'Material', // Default to Material if category missing
           unit: r.unit,
+          costPerUnit: r.unit_price || 0,
           unitCost: r.unit_price || 0,
           totalQuantity: r.quantity || 0,
           usedQuantity: 0, // TODO: Calculate from transactions
@@ -208,7 +209,7 @@ const CostsView: React.FC<CostsViewProps> = ({
             {/* Expense Breakdown */}
             <div className="lg:col-span-1 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
               <h3 className="text-lg font-black text-slate-900 mb-6">{lang === 'ar' ? 'توزيع المصروفات' : 'Expense Breakdown'}</h3>
-              <div className="h-64">
+              <div className="h-64" style={{ width: '100%', height: 256 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -234,7 +235,7 @@ const CostsView: React.FC<CostsViewProps> = ({
             {/* Budget vs Actual Trend */}
             <div className="lg:col-span-2 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
               <h3 className="text-lg font-black text-slate-900 mb-6">{lang === 'ar' ? 'الميزانية مقابل الفعلي (شهري)' : 'Budget vs Actual (Monthly)'}</h3>
-              <div className="h-64">
+              <div className="h-64" style={{ width: '100%', height: 256 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={[
                     { name: 'Jan', budget: 4000, actual: 2400 },
@@ -345,7 +346,7 @@ const CostsView: React.FC<CostsViewProps> = ({
               
               <h3 className="text-lg font-black text-slate-900 mb-1">{resource.name}</h3>
               <p className="text-slate-500 text-sm font-medium mb-6">
-                {Number(resource.unitCost).toLocaleString()} SAR / {resource.unit}
+                {Number(resource.costPerUnit).toLocaleString()} SAR / {resource.unit}
               </p>
 
               <div className="space-y-4">

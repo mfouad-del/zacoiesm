@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { config } from '../../config/env';
 import { UserRole } from '../../core/constants/roles';
@@ -20,7 +20,8 @@ export class AuthService {
   }
 
   static generateToken(payload: UserPayload): string {
-    return jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+    const options: SignOptions = { expiresIn: config.jwtExpiresIn as any };
+    return jwt.sign(payload, config.jwtSecret as jwt.Secret, options);
   }
 
   static verifyToken(token: string): UserPayload {

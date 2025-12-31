@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Language, ProcurementOrder, Supplier, Project, UserRole } from '../types';
-import { fetchProcurementOrders, fetchSuppliers, createProcurementOrder, createSupplier, updateProcurementOrder } from '../lib/services';
+import { fetchProcurementOrders, fetchSuppliers, createProcurementOrder, createSupplier } from '../lib/services';
 import { TRANSLATIONS } from '../constants';
 import { 
   ShoppingCart, 
@@ -9,12 +9,15 @@ import {
   Search, 
   CheckCircle2, 
   Users, 
-  Loader2
+  Loader2,
+  Package,
+  TrendingUp,
+  Clock
 } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
-  CardDescription, 
+  // CardDescription, 
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
@@ -60,7 +63,7 @@ interface ProcurementViewProps {
   userRole?: UserRole;
 }
 
-export default function ProcurementView({ lang, projects, userRole }: ProcurementViewProps) {
+export default function ProcurementView({ lang, projects }: ProcurementViewProps) {
   const t = TRANSLATIONS[lang];
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<ProcurementOrder[]>([]);
@@ -99,7 +102,7 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
 
     } catch (error) {
       console.error('Failed to load procurement data:', error);
-      toast.error(lang === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data');
+      toast.error(lang === 'ar' ? 'فشل تحميل بيانات المشتريات' : 'Failed to load procurement data');
     } finally {
       setIsLoading(false);
     }
@@ -111,21 +114,21 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
   }, []);
 
   const handleCreateOrder = async () => {
-    // Validation logic here
     if (!newOrder.projectId || !newOrder.supplierId) {
-      toast.error('Please fill in all required fields');
+      toast.error(lang === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
 
     setIsLoading(true);
     try {
-      await createProcurementOrder(newOrder, newOrder.items || []);
-      toast.success('Order created successfully');
+      await createProcurementOrder(newOrder, (newOrder.items || []) as any[]);
+      toast.success(lang === 'ar' ? 'تم إنشاء الطلب بنجاح' : 'Order created successfully');
       setIsOrderModalOpen(false);
       loadData();
+      setNewOrder({ projectId: '', supplierId: '', items: [], notes: '' });
     } catch (error) {
-      console.error(error);
-      toast.error('Failed to create order');
+      console.error('Failed to create order:', error);
+      toast.error(lang === 'ar' ? 'فشل إنشاء الطلب' : 'Failed to create order');
     } finally {
       setIsLoading(false);
     }
@@ -133,76 +136,146 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
 
   const handleCreateSupplier = async () => {
     if (!newSupplier.name || !newSupplier.email) {
-      toast.error('Please fill in all required fields');
+      toast.error(lang === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
 
     setIsLoading(true);
     try {
-      await createSupplier(newSupplier);
-      toast.success('Supplier added successfully');
+      await createSupplier({ ...newSupplier, status: 'active' });
+      toast.success(lang === 'ar' ? 'تم إضافة المورد بنجاح' : 'Supplier added successfully');
       setIsSupplierModalOpen(false);
       loadData();
+      setNewSupplier({ name: '', contactPerson: '', email: '', phone: '', address: '' });
     } catch (error) {
-      console.error(error);
-      toast.error('Failed to add supplier');
+      console.error('Failed to create supplier:', error);
+      toast.error(lang === 'ar' ? 'فشل إضافة المورد' : 'Failed to add supplier');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleApproveOrder = async (orderId: string) => {
-    if (userRole !== UserRole.PROJECT_MANAGER && userRole !== UserRole.SUPER_ADMIN && userRole !== UserRole.PROCUREMENT_MANAGER) {
-      toast.error('You do not have permission to approve orders');
-      return;
-    }
-
-    try {
-      await updateProcurementOrder(orderId, { status: 'approved' });
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status: 'approved' } : o));
-      toast.success('Order approved');
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to approve order');
-    }
-  };
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved': return <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">Approved</Badge>;
-      case 'pending_approval': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">Pending Approval</Badge>;
-      case 'rejected': return <Badge className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200">Rejected</Badge>;
-      case 'delivered': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">Delivered</Badge>;
-      default: return <Badge variant="outline">Draft</Badge>;
-    }
+    const statusMap = {
+      draft: { color: 'bg-slate-100 text-slate-700 border-slate-200', label: t.draft },
+      pending_approval: { color: 'bg-amber-50 text-amber-700 border-amber-200', label: t.pendingApproval },
+      approved: { color: 'bg-green-50 text-green-700 border-green-200', label: t.approved },
+      rejected: { color: 'bg-red-50 text-red-700 border-red-200', label: t.rejected },
+      ordered: { color: 'bg-blue-50 text-blue-700 border-blue-200', label: t.ordered },
+      delivered: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: t.delivered }
+    };
+    
+    const config = statusMap[status as keyof typeof statusMap] || { color: 'bg-slate-100 text-slate-700', label: status };
+    return <Badge variant="outline" className={config.color}>{config.label}</Badge>;
   };
+
+  if (isLoading && orders.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
+
+  // Calculate stats
+  const totalOrders = orders.length;
+  const pendingOrders = orders.filter(o => o.status === 'pending_approval').length;
+  const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
+  const totalAmount = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
   return (
     <div className="space-y-6 p-6 bg-slate-50/50 min-h-screen">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">{t.procurement}</h1>
-          <p className="text-slate-500 mt-1">Manage orders, suppliers, and approvals efficiently.</p>
+          <p className="text-slate-500 mt-1">{lang === 'ar' ? 'إدارة طلبات الشراء والموردين' : 'Manage purchase orders and suppliers'}</p>
         </div>
         <div className="flex gap-2">
+          <Dialog open={isSupplierModalOpen} onOpenChange={setIsSupplierModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Users className="h-4 w-4" />
+                {t.addSupplier}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t.addSupplier}</DialogTitle>
+                <DialogDescription>{lang === 'ar' ? 'أضف مورد جديد للنظام' : 'Add a new supplier to the system'}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>{t.supplierName}*</Label>
+                  <Input 
+                    placeholder={lang === 'ar' ? 'اسم المورد' : 'Supplier name'} 
+                    value={newSupplier.name}
+                    onChange={(e) => setNewSupplier({...newSupplier, name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t.contactPerson}</Label>
+                  <Input 
+                    placeholder={lang === 'ar' ? 'اسم جهة الاتصال' : 'Contact person'} 
+                    value={newSupplier.contactPerson}
+                    onChange={(e) => setNewSupplier({...newSupplier, contactPerson: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t.email}*</Label>
+                    <Input 
+                      type="email"
+                      placeholder={lang === 'ar' ? 'البريد الإلكتروني' : 'Email'} 
+                      value={newSupplier.email}
+                      onChange={(e) => setNewSupplier({...newSupplier, email: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t.phone}</Label>
+                    <Input 
+                      placeholder={lang === 'ar' ? 'رقم الهاتف' : 'Phone'} 
+                      value={newSupplier.phone}
+                      onChange={(e) => setNewSupplier({...newSupplier, phone: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t.address}</Label>
+                  <Input 
+                    placeholder={lang === 'ar' ? 'العنوان' : 'Address'} 
+                    value={newSupplier.address}
+                    onChange={(e) => setNewSupplier({...newSupplier, address: e.target.value})}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleCreateSupplier} disabled={isLoading} className="bg-brand-600 hover:bg-brand-700">
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (lang === 'ar' ? 'حفظ' : 'Save')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2 bg-brand-600 hover:bg-brand-700">
                 <Plus className="h-4 w-4" />
-                {lang === 'ar' ? 'طلب شراء جديد' : 'New Purchase Order'}
+                {t.createOrder}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create Purchase Order</DialogTitle>
-                <DialogDescription>Fill in the details for the new procurement request.</DialogDescription>
+                <DialogTitle>{t.createOrder}</DialogTitle>
+                <DialogDescription>{lang === 'ar' ? 'إنشاء طلب شراء جديد' : 'Create a new purchase order'}</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Project</Label>
+                    <Label>{t.projectName}*</Label>
                     <Select onValueChange={(v) => setNewOrder({...newOrder, projectId: v})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Project" />
+                        <SelectValue placeholder={lang === 'ar' ? 'اختر مشروع' : 'Select Project'} />
                       </SelectTrigger>
                       <SelectContent>
                         {projects.map(p => (
@@ -212,10 +285,10 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Supplier</Label>
+                    <Label>{t.supplier}*</Label>
                     <Select onValueChange={(v) => setNewOrder({...newOrder, supplierId: v})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Supplier" />
+                        <SelectValue placeholder={lang === 'ar' ? 'اختر مورد' : 'Select Supplier'} />
                       </SelectTrigger>
                       <SelectContent>
                         {suppliers.map(s => (
@@ -225,19 +298,18 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
                     </Select>
                   </div>
                 </div>
-                {/* Item details would go here - simplified for this view */}
                 <div className="space-y-2">
-                  <Label>Notes</Label>
+                  <Label>{lang === 'ar' ? 'ملاحظات' : 'Notes'}</Label>
                   <Input 
-                    placeholder="Additional notes..." 
+                    placeholder={lang === 'ar' ? 'ملاحظات إضافية...' : 'Additional notes...'} 
                     value={newOrder.notes}
                     onChange={(e) => setNewOrder({...newOrder, notes: e.target.value})}
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleCreateOrder} disabled={isLoading}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Order'}
+                <Button onClick={handleCreateOrder} disabled={isLoading} className="bg-brand-600 hover:bg-brand-700">
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.createOrder}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -245,24 +317,56 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{lang === 'ar' ? 'إجمالي الطلبات' : 'Total Orders'}</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalOrders}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{lang === 'ar' ? 'بانتظار الاعتماد' : 'Pending Approval'}</CardTitle>
+            <Clock className="h-4 w-4 text-amber-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{pendingOrders}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{lang === 'ar' ? 'تم التسليم' : 'Delivered'}</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{deliveredOrders}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{lang === 'ar' ? 'القيمة الإجمالية' : 'Total Value'}</CardTitle>
+            <TrendingUp className="h-4 w-4 text-brand-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalAmount.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="orders" className="gap-2">
             <ShoppingCart className="h-4 w-4" />
-            Purchase Orders
+            {t.orders}
           </TabsTrigger>
           <TabsTrigger value="suppliers" className="gap-2">
             <Users className="h-4 w-4" />
-            Suppliers
-          </TabsTrigger>
-          <TabsTrigger value="approvals" className="gap-2">
-            <CheckCircle2 className="h-4 w-4" />
-            Pending Approvals
-            {orders.filter(o => o.status === 'pending_approval').length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                {orders.filter(o => o.status === 'pending_approval').length}
-              </Badge>
-            )}
+            {t.suppliers}
           </TabsTrigger>
         </TabsList>
 
@@ -270,11 +374,11 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Purchase Orders</CardTitle>
+                <CardTitle>{lang === 'ar' ? 'طلبات الشراء' : 'Purchase Orders'}</CardTitle>
                 <div className="flex gap-2">
                   <div className="relative w-64">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search orders..." className="pl-8" />
+                    <Input placeholder={t.search} className="pl-8" />
                   </div>
                   <Button variant="outline" size="icon">
                     <Filter className="h-4 w-4" />
@@ -286,29 +390,37 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order #</TableHead>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t.orderNumber}</TableHead>
+                    <TableHead>{t.projectName}</TableHead>
+                    <TableHead>{t.supplier}</TableHead>
+                    <TableHead>{t.requestDate}</TableHead>
+                    <TableHead>{t.totalAmount}</TableHead>
+                    <TableHead>{t.status}</TableHead>
+                    <TableHead className="text-right">{t.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                      <TableCell>{projects.find(p => p.id === order.projectId)?.name || order.projectId}</TableCell>
-                      <TableCell>{suppliers.find(s => s.id === order.supplierId)?.name || order.supplierId}</TableCell>
-                      <TableCell>{order.requestDate}</TableCell>
-                      <TableCell>${order.totalAmount.toLocaleString()}</TableCell>
-                      <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">View</Button>
+                  {orders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                        {lang === 'ar' ? 'لا توجد طلبات' : 'No orders found'}
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    orders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                        <TableCell>{projects.find(p => p.id === order.projectId)?.name || '-'}</TableCell>
+                        <TableCell>{suppliers.find(s => s.id === order.supplierId)?.name || '-'}</TableCell>
+                        <TableCell>{order.requestDate}</TableCell>
+                        <TableCell className="font-semibold">${order.totalAmount?.toLocaleString() || 0}</TableCell>
+                        <TableCell>{getStatusBadge(order.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">{lang === 'ar' ? 'عرض' : 'View'}</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -317,134 +429,48 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
 
         <TabsContent value="suppliers" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Supplier Directory</CardTitle>
-              <Dialog open={isSupplierModalOpen} onOpenChange={setIsSupplierModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Supplier
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Supplier</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Company Name</Label>
-                      <Input 
-                        value={newSupplier.name}
-                        onChange={(e) => setNewSupplier({...newSupplier, name: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Contact Person</Label>
-                      <Input 
-                        value={newSupplier.contactPerson}
-                        onChange={(e) => setNewSupplier({...newSupplier, contactPerson: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input 
-                        value={newSupplier.email}
-                        onChange={(e) => setNewSupplier({...newSupplier, email: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleCreateSupplier} disabled={isLoading}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Supplier'}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {suppliers.map((supplier) => (
-                    <TableRow key={supplier.id}>
-                      <TableCell className="font-medium">{supplier.name}</TableCell>
-                      <TableCell>{supplier.contactPerson}</TableCell>
-                      <TableCell>{supplier.email}</TableCell>
-                      <TableCell>{supplier.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="font-bold mr-1">{supplier.rating}</span>
-                          <span className="text-yellow-500">★</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">Edit</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="approvals" className="space-y-4">
-          <Card>
             <CardHeader>
-              <CardTitle>Pending Approvals</CardTitle>
-              <CardDescription>Orders waiting for your review and authorization.</CardDescription>
+              <CardTitle>{lang === 'ar' ? 'قائمة الموردين' : 'Suppliers List'}</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order #</TableHead>
-                    <TableHead>Requested By</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t.supplierName}</TableHead>
+                    <TableHead>{t.contactPerson}</TableHead>
+                    <TableHead>{t.email}</TableHead>
+                    <TableHead>{t.phone}</TableHead>
+                    <TableHead>{t.status}</TableHead>
+                    <TableHead className="text-right">{t.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.filter(o => o.status === 'pending_approval').length === 0 ? (
+                  {suppliers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                        No pending approvals.
+                      <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                        {lang === 'ar' ? 'لا يوجد موردين' : 'No suppliers found'}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    orders.filter(o => o.status === 'pending_approval').map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                        <TableCell>{order.requestedBy}</TableCell>
-                        <TableCell>${order.totalAmount.toLocaleString()}</TableCell>
-                        <TableCell>{order.requestDate}</TableCell>
+                    suppliers.map((supplier) => (
+                      <TableRow key={supplier.id}>
+                        <TableCell className="font-medium">{supplier.name}</TableCell>
+                        <TableCell>{supplier.contactPerson || '-'}</TableCell>
+                        <TableCell>{supplier.email}</TableCell>
+                        <TableCell>{supplier.phone || '-'}</TableCell>
+                        <TableCell>
+                          {supplier.status === 'active' ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              {lang === 'ar' ? 'نشط' : 'Active'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-slate-100 text-slate-700">
+                              {lang === 'ar' ? 'غير نشط' : 'Inactive'}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              Reject
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() => handleApproveOrder(order.id)}
-                            >
-                              Approve
-                            </Button>
-                          </div>
+                          <Button variant="ghost" size="sm">{lang === 'ar' ? 'تعديل' : 'Edit'}</Button>
                         </TableCell>
                       </TableRow>
                     ))

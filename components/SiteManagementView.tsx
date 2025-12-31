@@ -43,6 +43,7 @@ const SiteManagementView: React.FC<SiteManagementViewProps> = ({ lang, reports, 
     // Resources
     // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
+      // @ts-expect-error: jspdf-autotable types are missing
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الموارد' : 'Resources', lang === 'ar' ? 'العدد' : 'Count']],
       body: [
@@ -55,6 +56,7 @@ const SiteManagementView: React.FC<SiteManagementViewProps> = ({ lang, reports, 
     // Activities
     // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
+      // @ts-expect-error: jspdf-autotable types are missing
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الأنشطة المنجزة' : 'Completed Activities']],
       body: [[report.activities]],
@@ -66,6 +68,7 @@ const SiteManagementView: React.FC<SiteManagementViewProps> = ({ lang, reports, 
     if (report.safetyObservations && report.safetyObservations.length > 0) {
       // @ts-expect-error: jspdf-autotable types are missing
       doc.autoTable({
+        // @ts-expect-error: jspdf-autotable types are missing
         startY: doc.lastAutoTable.finalY + 10,
         head: [[lang === 'ar' ? 'ملاحظات السلامة' : 'Safety Observations']],
         body: report.safetyObservations.map(obs => [obs]),

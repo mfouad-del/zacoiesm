@@ -3,7 +3,7 @@ import { Language, PlanningTask } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { GanttChartSquare, Download, Plus, LayoutList, Filter, Search, Clock, AlertCircle, CheckCircle, User } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface PlanningViewProps {
   lang: Language;
@@ -78,8 +78,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ lang, activities, onAddActi
       a.assignee || '-'
     ]);
 
-    // @ts-expect-error: jspdf-autotable types are missing
-    doc.autoTable({
+    autoTable(doc, {
       startY: 40,
       head: [[
         lang === 'ar' ? 'المهمة' : 'Task',

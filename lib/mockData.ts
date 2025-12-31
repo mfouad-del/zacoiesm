@@ -8,7 +8,7 @@ export const MOCK_PROJECTS: Project[] = [
     budget: 50000000,
     startDate: '2024-01-01',
     endDate: '2025-12-31',
-    status: 'Active',
+    status: 'active',
     progress: 35,
     location: 'الرياض',
     manager: 'م. أحمد علي'
@@ -20,7 +20,7 @@ export const MOCK_PROJECTS: Project[] = [
     budget: 12000000,
     startDate: '2024-03-15',
     endDate: '2025-06-30',
-    status: 'Active',
+    status: 'active',
     progress: 15,
     location: 'جدة',
     manager: 'م. خالد عمر'

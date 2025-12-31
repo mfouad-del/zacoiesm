@@ -66,6 +66,18 @@ export async function updateProcurementOrder(id: string, updates: Partial<Procur
   return data;
 }
 
+export async function updateSupplier(id: string, updates: Partial<Supplier>) {
+  const { data, error } = await supabase.from('suppliers').update(updates).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteProcurementOrder(id: string) {
+  const { error } = await supabase.from('procurement_orders').delete().eq('id', id);
+  if (error) throw error;
+  return true;
+}
+
 // --- Inventory (Resources) ---
 export async function fetchInventory(siteId?: string) {
   let query = supabase.from('resources').select('*').order('name');
@@ -78,6 +90,27 @@ export async function fetchInventory(siteId?: string) {
 
 export async function updateInventoryQuantity(id: string, quantity: number) {
   const { data, error } = await supabase.from('resources').update({ quantity }).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createInventoryItem(item: Record<string, unknown>) {
+  const { data, error } = await supabase.from('resources').insert(item).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createResourceTransaction(transaction: Record<string, unknown>) {
+  const { data, error } = await supabase.from('resource_transactions').insert(transaction).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchResourceTransactions(resourceId?: string) {
+  let query = supabase.from('resource_transactions').select('*, resource:resources(name, unit), user:users(full_name)').order('transaction_date', { ascending: false });
+  if (resourceId) query = query.eq('resource_id', resourceId);
+  
+  const { data, error } = await query;
   if (error) throw error;
   return data;
 }
@@ -98,6 +131,18 @@ export async function createCorrespondence(item: Partial<Correspondence>) {
   return data;
 }
 
+export async function updateCorrespondence(id: string, updates: Partial<Correspondence>) {
+  const { data, error } = await supabase.from('correspondence').update(updates).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCorrespondence(id: string) {
+  const { error } = await supabase.from('correspondence').delete().eq('id', id);
+  if (error) throw error;
+  return true;
+}
+
 // --- BIM ---
 export async function fetchBIMModels(projectId?: string) {
   let query = supabase.from('bim_models').select('*').order('created_at', { ascending: false });
@@ -112,6 +157,18 @@ export async function createBIMModel(model: Partial<BIMModel>) {
   const { data, error } = await supabase.from('bim_models').insert(model).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function updateBIMModel(id: string, updates: Partial<BIMModel>) {
+  const { data, error } = await supabase.from('bim_models').update(updates).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteBIMModel(id: string) {
+  const { error } = await supabase.from('bim_models').delete().eq('id', id);
+  if (error) throw error;
+  return true;
 }
 
 // --- Audit Logs ---
@@ -138,4 +195,29 @@ export async function logActivity(action: string, entityType: string, entityId?:
     details
   });
   if (error) console.error('Failed to log activity:', error);
+}
+
+// --- Auth & Users ---
+export async function changePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+  return true;
+}
+
+export async function fetchUsers() {
+  const { data, error } = await supabase.from('users').select('*').order('full_name');
+  if (error) throw error;
+  return data;
+}
+
+export async function createUser(user: Record<string, unknown>) {
+  const { data, error } = await supabase.from('users').insert(user).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteUser(id: string) {
+  const { error } = await supabase.from('users').delete().eq('id', id);
+  if (error) throw error;
+  return true;
 }

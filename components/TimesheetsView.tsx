@@ -151,7 +151,7 @@ const TimesheetsView: React.FC<TimesheetsViewProps> = ({ lang, entries, onAddEnt
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
               <h3 className="text-lg font-black text-slate-900 mb-6">{lang === 'ar' ? 'الساعات حسب المشروع' : 'Hours by Project'}</h3>
-              <div className="h-64">
+              <div className="h-64" style={{ width: '100%', height: 256 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -166,7 +166,7 @@ const TimesheetsView: React.FC<TimesheetsViewProps> = ({ lang, entries, onAddEnt
 
             <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
               <h3 className="text-lg font-black text-slate-900 mb-6">{lang === 'ar' ? 'حالة السجلات' : 'Entry Status'}</h3>
-              <div className="h-64">
+              <div className="h-64" style={{ width: '100%', height: 256 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie

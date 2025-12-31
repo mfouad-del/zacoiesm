@@ -2,8 +2,21 @@ import React, { useState, useMemo } from 'react';
 import { Project, Language, Contract, Variation, NCR, Report, Timesheet } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, AlertCircle, CheckCircle2, DollarSign, ArrowUpRight, Plus, Calendar, Activity, Users, FileText, ShieldAlert } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle2, DollarSign, ArrowUpRight, Plus, Calendar, Activity, Users, FileText, ShieldAlert, FileSpreadsheet, File as FileIcon } from 'lucide-react';
 import EVMDashboard from './EVMDashboard';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "sonner";
 
 interface DashboardViewProps {
   projects: Project[];
@@ -55,6 +68,21 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(
     projects.length > 0 ? projects[0].id : undefined
   );
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportType, setReportType] = useState('daily');
+
+  const handleGenerateReport = () => {
+    setIsReportOpen(false);
+    toast.success(lang === 'ar' ? 'تم إنشاء التقرير بنجاح' : 'Report generated successfully');
+    // In a real app, this would trigger a download
+  };
+
+  const todaySchedule = [
+    { time: '09:00', title: lang === 'ar' ? 'اجتماع الموقع' : 'Site Meeting', type: 'meeting' },
+    { time: '11:00', title: lang === 'ar' ? 'فحص الجودة' : 'Quality Inspection', type: 'inspection' },
+    { time: '14:00', title: lang === 'ar' ? 'مراجعة المشتريات' : 'Procurement Review', type: 'review' },
+  ];
 
   const totalContractValue = useMemo(() => contracts.reduce((acc, c) => acc + c.value, 0), [contracts]);
   const openNCRs = useMemo(() => ncrs.filter(n => n.status === 'open').length, [ncrs]);
@@ -91,14 +119,90 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
-            <Calendar size={18} />
-            {lang === 'ar' ? 'الجدول اليومي' : 'Daily Schedule'}
-          </button>
-          <button className="flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-2xl text-sm font-bold hover:bg-brand-700 transition-all active:scale-95 shadow-lg shadow-brand-500/25">
-            <Plus size={18} />
-            {t.generateReport}
-          </button>
+          <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+            <DialogTrigger asChild>
+              <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
+                <Calendar size={18} />
+                {lang === 'ar' ? 'الجدول اليومي' : 'Daily Schedule'}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>{lang === 'ar' ? 'الجدول اليومي' : 'Daily Schedule'}</DialogTitle>
+                <DialogDescription>
+                  {lang === 'ar' ? 'مهامك ومواعيدك لهذا اليوم' : 'Your tasks and appointments for today'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 space-y-4">
+                {todaySchedule.map((item, index) => (
+                  <div key={index} className="flex items-center gap-4 p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <div className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">
+                      {item.time}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900">{item.title}</h4>
+                      <span className="text-xs text-slate-500 capitalize">{item.type}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsScheduleOpen(false)}>
+                  {lang === 'ar' ? 'إغلاق' : 'Close'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+            <DialogTrigger asChild>
+              <button className="flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-2xl text-sm font-bold hover:bg-brand-700 transition-all active:scale-95 shadow-lg shadow-brand-500/25">
+                <Plus size={18} />
+                {t.generateReport}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>{t.generateReport}</DialogTitle>
+                <DialogDescription>
+                  {lang === 'ar' ? 'اختر نوع التقرير الذي تريد إنشاءه' : 'Select the type of report you want to generate'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <RadioGroup value={reportType} onValueChange={setReportType} className="grid grid-cols-1 gap-4">
+                  <div className="flex items-center space-x-2 space-x-reverse border p-4 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                    <RadioGroupItem value="daily" id="daily" />
+                    <Label htmlFor="daily" className="flex-1 cursor-pointer flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-500" />
+                      {lang === 'ar' ? 'تقرير يومي' : 'Daily Report'}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse border p-4 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                    <RadioGroupItem value="weekly" id="weekly" />
+                    <Label htmlFor="weekly" className="flex-1 cursor-pointer flex items-center gap-2">
+                      <FileSpreadsheet className="h-4 w-4 text-green-500" />
+                      {lang === 'ar' ? 'تقرير أسبوعي' : 'Weekly Report'}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse border p-4 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                    <RadioGroupItem value="monthly" id="monthly" />
+                    <Label htmlFor="monthly" className="flex-1 cursor-pointer flex items-center gap-2">
+                      <FileIcon className="h-4 w-4 text-purple-500" />
+                      {lang === 'ar' ? 'تقرير شهري' : 'Monthly Report'}
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsReportOpen(false)}>
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button onClick={handleGenerateReport}>
+                  {lang === 'ar' ? 'إنشاء' : 'Generate'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -126,7 +230,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
                </span>
             </div>
           </div>
-          <div className="h-[350px]">
+          <div className="h-[350px]" style={{ width: '100%', height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -149,7 +253,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
 
         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex flex-col">
           <h3 className="text-lg font-bold text-slate-900 tracking-tight mb-8">{t.projectDistribution}</h3>
-          <div className="flex-1 flex items-center justify-center relative min-h-[350px]">
+          <div className="flex-1 flex items-center justify-center relative" style={{ width: '100%', height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

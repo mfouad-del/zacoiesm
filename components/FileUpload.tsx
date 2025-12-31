@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { uploadFile, validateFile } from '../lib/storage/upload';
+import { uploadFile, validateFile } from '@/lib/storage/upload';
 import toast from 'react-hot-toast';
 
 interface FileUploadProps {

@@ -28,7 +28,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects, lang, onAddProjec
     });
   }, [projects, searchQuery, statusFilter]);
 
-  const handleExport = (format: 'excel' | 'pdf') => {
+  const handleExport = async (format: 'excel' | 'pdf') => {
     const data = filteredProjects.map(p => ({
       'كود المشروع': p.code,
       'اسم المشروع': p.name,
@@ -46,7 +46,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects, lang, onAddProjec
       if (success) toast.success('تم تصدير Excel بنجاح');
     } else {
       const columns = ['كود المشروع', 'اسم المشروع', 'العميل', 'مدير المشروع', 'الحالة', 'الميزانية', 'التقدم'];
-      const success = exportToPDF(data, columns, `projects_${Date.now()}`, 'تقرير المشاريع');
+      const success = await exportToPDF(data, columns, `projects_${Date.now()}`, 'تقرير المشاريع');
       if (success) toast.success('تم تصدير PDF بنجاح');
     }
   };

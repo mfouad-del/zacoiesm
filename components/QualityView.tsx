@@ -66,6 +66,7 @@ const QualityView: React.FC<QualityViewProps> = ({ lang, ncrs, onAddNCR, onUpdat
     // Description & Analysis
     // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
+      // @ts-expect-error: jspdf-autotable types are missing
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الوصف والتحليل' : 'Description & Analysis']],
       body: [

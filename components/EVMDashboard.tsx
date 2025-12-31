@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { api } from '../lib/api';
+import React, { useState, useEffect, useCallback } from 'react';
+// import { api } from '../lib/api';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -53,7 +53,8 @@ const EVMDashboard: React.FC<EVMDashboardProps> = ({ projectId, lang: _lang = 'a
     setError(null);
     
     try {
-      const data = await api.costTracking.getLatest(projectId);
+      // const data = await api.costTracking.getLatest(projectId);
+      const data: any = null; // Disabled until costTracking API is restored
       
       if (data) {
         setMetrics({

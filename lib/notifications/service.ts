@@ -11,11 +11,20 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: 'info' | 'success' | 'warning' | 'error' | 'approval_update' | 'approval_required';
   entity_type?: string;
   entity_id?: string;
   read: boolean;
   created_at: string;
+}
+
+export interface CreateNotificationDto {
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error' | 'approval_update' | 'approval_required';
+  entity_type?: string;
+  entity_id?: string;
 }
 
 class NotificationService {
@@ -43,6 +52,17 @@ class NotificationService {
         }
       )
       .subscribe();
+  }
+
+  async create(notification: CreateNotificationDto) {
+    const { error } = await this.supabase
+      .from('notifications')
+      .insert([notification]);
+
+    if (error) {
+      console.error('Failed to create notification:', error);
+      throw error;
+    }
   }
 
   unsubscribe() {

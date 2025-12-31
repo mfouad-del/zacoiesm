@@ -24,6 +24,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Modal from './components/Modal';
 
+import { createClient } from './lib/supabase/client';
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('sb-access-token'));
   const [lang, setLang] = useState<Language>('ar');
@@ -43,12 +45,25 @@ const App: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
 
   const [user, setUser] = useState<User>({
-    id: '1',
+    id: '', // Initialize with empty string, will be populated
     name: 'م. أحمد علي',
     email: 'ahmed.ali@example.com',
     role: UserRole.SUPER_ADMIN,
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed'
   });
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        setUser(prev => ({ ...prev, id: authUser.id, email: authUser.email || prev.email }));
+      }
+    };
+    if (isAuthenticated) {
+      fetchUser();
+    }
+  }, [isAuthenticated]);
 
   const handleSearch = (query: string) => {
     console.log('Searching for:', query);
@@ -184,13 +199,13 @@ const App: React.FC = () => {
     if (ncr) {
       await auditLogger.logNCRStatusChange(id, ncr.id, ncr.status, status);
     }
-    setNcrs(ncrs.map(n => n.id === id ? { ...n, status } : n));
+    setNcrs(ncrs.map(n => n.id === id ? { ...n, status: status as any } : n));
   }, [ncrs]);
   
   const approveTimesheet = useCallback(async (id: string) => {
     const ts = timesheets.find(t => t.id === id);
     if (ts) {
-      await auditLogger.logTimesheetApproval(id, ts.employeeName);
+      await auditLogger.logTimesheetApproval(id, ts.employee);
     }
     setTimesheets(timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t));
   }, [timesheets]);
@@ -207,7 +222,7 @@ const App: React.FC = () => {
         reports={reports}
         timesheets={timesheets}
       />;
-      case 'projects': return <ProjectsView projects={user.role === UserRole.CLIENT_VIEWER ? projects.filter(p => p.status === 'active').slice(0, 3) : projects} lang={lang} onAddProject={() => user.role === UserRole.CLIENT_VIEWER ? toast.error(lang === 'ar' ? 'ليس لديك صلاحية' : 'Access Denied') : openModal('project')} readOnly={user.role === UserRole.CLIENT_VIEWER} />;
+      case 'projects': return <ProjectsView projects={user.role === UserRole.CLIENT ? projects.filter(p => p.status === 'active').slice(0, 3) : projects} lang={lang} onAddProject={() => user.role === UserRole.CLIENT ? toast.error(lang === 'ar' ? 'ليس لديك صلاحية' : 'Access Denied') : openModal('project')} readOnly={user.role === UserRole.CLIENT} />;
       case 'contracts': return <ContractsView lang={lang} contracts={contracts} variations={variations} onAddVO={() => openModal('variation')} onAddContract={() => openModal('contract')} />;
       case 'planning': return <PlanningView lang={lang} activities={planningTasks} onAddActivity={() => openModal('planning')} />;
       case 'site': return <SiteManagementView lang={lang} reports={reports} onAddReport={() => openModal('report')} />;

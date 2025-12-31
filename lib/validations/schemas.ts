@@ -112,7 +112,7 @@ export const reportSchema = z.object({
   site_id: z.string().uuid().optional(),
   title: z.string().min(5, 'عنوان التقرير يجب أن يكون 5 أحرف على الأقل'),
   type: z.enum(['daily', 'weekly', 'monthly', 'incident', 'safety', 'progress', 'financial']),
-  content: z.record(z.any()),
+  content: z.record(z.string(), z.any()),
   report_date: z.string().refine((date) => !isNaN(Date.parse(date)), 'تاريخ غير صحيح')
 });
 

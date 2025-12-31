@@ -103,22 +103,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           endDate: t.due_date,
           progress: t.status === 'completed' ? 100 : t.status === 'in_progress' ? 50 : 0,
           status: t.status,
-          critical: t.priority === 'urgent' || t.priority === 'high'
+          critical: t.priority === 'urgent' || t.priority === 'high',
+          duration: 0
         })),
         reports: reportsData as Report[],
         ncrs: (ncrsData as Record<string, any>[]).map((n) => ({
-          id: n.ncr_number,
+          id: n.id,
           projectId: n.project_id,
           title: n.title,
           description: n.description,
           severity: n.severity,
           status: n.status.toLowerCase(),
-          date: n.issued_date || n.created_at
+          date: n.created_at
         })),
         documents: documentsData as Document[],
         timesheets: timesheetsData as Timesheet[],
         incidents: incidentsData as Incident[],
-        notifications: notificationsData as Notification[],
+        notifications: [],
         isLoading: false
       }));
     } catch (error) {
@@ -132,14 +133,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      const appUser: User | null = user ? {
+        id: user.id,
+        name: user.user_metadata.full_name || user.email || 'User',
+        email: user.email || '',
+        role: (user.user_metadata.role as any) || 'viewer',
+        avatar: user.user_metadata.avatar_url
+      } : null;
+
       setState(prev => ({
         ...prev,
-        user,
-        isAuthenticated: !!user,
-        isLoading: !user
+        user: appUser,
+        isAuthenticated: !!appUser,
+        isLoading: !appUser
       }));
       
-      if (user) {
+      if (appUser) {
         await refreshData();
       } else {
         setState(prev => ({ ...prev, isLoading: false }));
@@ -149,13 +158,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user;
+      const appUser: User | null = user ? {
+        id: user.id,
+        name: user.user_metadata.full_name || user.email || 'User',
+        email: user.email || '',
+        role: (user.user_metadata.role as any) || 'viewer',
+        avatar: user.user_metadata.avatar_url
+      } : null;
+
       setState(prev => ({
         ...prev,
-        user: session?.user || null,
-        isAuthenticated: !!session?.user
+        user: appUser,
+        isAuthenticated: !!appUser
       }));
       
-      if (session?.user) {
+      if (appUser) {
         refreshData();
       }
     });
@@ -175,7 +193,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status: 'active',
           budget: data.budget || 0,
           progress: 0,
-          startDate: data.start_date,
+          startDate: data.startqualityte,
           endDate: data.end_date,
           location: data.location,
           manager: 'You'
@@ -192,7 +210,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addNCR = async (ncr: any) => {
-    const { data } = await api.ncr.create(ncr);
+    const { data } = await api.quality.create(ncr);
     if (data) {
       await refreshData();
     }
@@ -213,22 +231,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addTask = async (task: any) => {
-    const { data } = await api.tasks.create(task);
+    const { data } = await api.planning.create(task);
     if (data) {
       await refreshData();
     }
   };
 
   const updateNCRStatus = async (id: string, status: string) => {
-    await api.ncr.updateStatus(id, status.toUpperCase());
+    await api.quality.update(id, { status: status.toUpperCase() });
     setState(prev => ({
       ...prev,
-      ncrs: prev.ncrs.map(n => n.id === id ? { ...n, status: status.toLowerCase() } : n)
+      ncrs: prev.ncrs.map(n => n.id === id ? { ...n, status: status.toLowerCase() as 'open' | 'closed' | 'pending_review' } : n)
     }));
   };
 
   const approveTimesheet = async (id: string) => {
-    await api.timesheets.approve(id);
+    await api.timesheets.update(id, { status: 'approved' });
     setState(prev => ({
       ...prev,
       timesheets: prev.timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t)
@@ -236,10 +254,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const markNotificationRead = async (id: string) => {
-    await api.notifications.markAsRead(id);
+    // await api.notifications.markAsRead(id);
     setState(prev => ({
       ...prev,
-      notifications: prev.notifications.map(n => n.id === id ? { ...n, is_read: true } : n)
+      notifications: prev.notifications.map(n => n.id === id ? { ...n, read: true } : n)
     }));
   };
 

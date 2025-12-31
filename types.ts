@@ -112,6 +112,7 @@ export interface PlanningTask {
   endDate: string;
   duration: number;
   status: 'not_started' | 'in_progress' | 'completed' | 'delayed';
+  budget?: number;
   assignee?: string;
   dependencies?: string[];
   projectId?: string;
@@ -150,6 +151,16 @@ export interface Report {
   delays?: string[];
   photos?: string[];
   supervisor?: string;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  date: string;
+  link?: string;
 }
 
 export interface NCR {
@@ -249,15 +260,6 @@ export interface Task {
   dependencies: string[];
 }
 
-export interface NCR {
-  id: string;
-  projectId: string;
-  title: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  status: 'open' | 'closed' | 'in-progress';
-  date: string;
-}
 
 export interface DailyReport {
   id: string;

@@ -68,7 +68,7 @@ export const exportToPDF = async (
     
     // Add title
     doc.setFontSize(18);
-    doc.text(title, doc.internal.pageSize.width - 20, 20, { align: 'right', lang: 'ar' });
+    doc.text(title, doc.internal.pageSize.width - 20, 20, { align: 'right' });
     
     // Add date
     doc.setFontSize(10);
