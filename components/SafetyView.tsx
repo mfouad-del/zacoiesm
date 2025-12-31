@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Language, Incident } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { ShieldAlert, Users, HeartPulse, Activity, Clock, Search, Filter, MapPin, AlertTriangle, CheckCircle, FileText, Download, ChevronRight, Flame, HardHat } from 'lucide-react';
+import { ShieldAlert, Users, HeartPulse, Activity, Clock, Search, Filter, MapPin, AlertTriangle, CheckCircle, Download, ChevronRight, Flame, HardHat } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -57,7 +57,7 @@ const SafetyView: React.FC<SafetyViewProps> = ({ lang, incidents, onAddIncident 
     doc.text(`${lang === 'ar' ? 'الحالة' : 'Status'}: ${incident.status.toUpperCase()}`, 150, 35);
 
     // Details Table
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: 50,
       head: [[lang === 'ar' ? 'التفاصيل' : 'Details', '']],
@@ -74,7 +74,7 @@ const SafetyView: React.FC<SafetyViewProps> = ({ lang, incidents, onAddIncident 
     });
 
     // Description & Analysis
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الوصف والتحليل' : 'Description & Analysis']],

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from './lib/api';
 import { auditLogger } from './lib/audit/logger';
-import { Language, Project, Contract, Variation, PlanningTask, Report, NCR, Document, Timesheet, Incident, User, UserRole, Expense, Resource } from './types';
-import { MOCK_REPORTS, MOCK_NCRS, MOCK_INCIDENTS, MOCK_DOCUMENTS, MOCK_EXPENSES, MOCK_RESOURCES, MOCK_TIMESHEETS } from './lib/mockData';
+import { Language, Project, Contract, Variation, PlanningTask, Report, NCR, Document, Timesheet, Incident, User, UserRole } from './types';
 import { Toaster, toast } from 'react-hot-toast';
 import DashboardView from './components/DashboardView';
 import ProjectsView from './components/ProjectsView';
@@ -42,8 +41,6 @@ const App: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [resources, setResources] = useState<Resource[]>([]);
 
   const [user, setUser] = useState<User>({
     id: '1',
@@ -92,6 +89,7 @@ const App: React.FC = () => {
         setVariations(variationsData);
         
         // Map tasks to planning view model
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mappedPlanning = planningData.map((t: any) => ({
             id: t.id,
             name: t.title,
@@ -105,13 +103,11 @@ const App: React.FC = () => {
         }));
         setPlanningTasks(mappedPlanning);
 
-        setReports(reportsData.length > 0 ? reportsData : MOCK_REPORTS);
-        setNcrs(ncrsData.length > 0 ? ncrsData : MOCK_NCRS);
-        setDocuments(documentsData.length > 0 ? documentsData : MOCK_DOCUMENTS);
-        setTimesheets(timesheetsData.length > 0 ? timesheetsData : MOCK_TIMESHEETS);
-        setIncidents(incidentsData.length > 0 ? incidentsData : MOCK_INCIDENTS);
-        setExpenses(MOCK_EXPENSES);
-        setResources(MOCK_RESOURCES);
+        setReports(reportsData);
+        setNcrs(ncrsData);
+        setDocuments(documentsData);
+        setTimesheets(timesheetsData);
+        setIncidents(incidentsData);
       } catch (error) {
         console.error("Failed to load data", error);
       }
@@ -173,15 +169,9 @@ const App: React.FC = () => {
       case 'incident':
         setIncidents([{ ...formData, id: `INC-${Math.floor(Math.random() * 1000)}`, status: 'Investigating' }, ...incidents]);
         break;
-      case 'expense':
-        setExpenses([{ ...formData, id: `EXP-${Math.floor(Math.random() * 1000)}`, status: 'Pending' }, ...expenses]);
-        break;
-      case 'resource':
-        setResources([{ ...formData, id: `RES-${Math.floor(Math.random() * 1000)}`, usedQuantity: 0 }, ...resources]);
-        break;
     }
     setIsModalOpen(false);
-  }, [modalType, projects, contracts, variations, planningTasks, reports, ncrs, documents, timesheets, incidents, expenses, resources]);
+  }, [modalType, projects, contracts, variations, planningTasks, reports, ncrs, documents, timesheets, incidents]);
 
   // Open modal with specific type - memoized
   const openModal = useCallback((type: string) => {
@@ -224,7 +214,7 @@ const App: React.FC = () => {
       case 'quality': return <QualityView lang={lang} ncrs={ncrs} onAddNCR={() => openModal('ncr')} onUpdateStatus={updateNCRStatus} />;
       case 'safety': return <SafetyView lang={lang} incidents={incidents} onAddIncident={() => openModal('incident')} />;
       case 'documents': return <DocumentsView lang={lang} documents={documents} onAddDoc={() => openModal('doc')} />;
-      case 'costs': return <CostsView lang={lang} projects={projects} expenses={expenses} resources={resources} onAddExpense={() => openModal('expense')} onAddResource={() => openModal('resource')} />;
+      case 'costs': return <CostsView lang={lang} projects={projects} onAddExpense={() => openModal('expense')} onAddResource={() => openModal('resource')} />;
       case 'timesheets': return <TimesheetsView lang={lang} entries={timesheets} onAddEntry={() => openModal('timesheet')} onApprove={approveTimesheet} />;
       case 'procurement': return <ProcurementView lang={lang} projects={projects} userRole={user.role} />;
       case 'inventory': return <InventoryView lang={lang} />;
@@ -241,10 +231,10 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen flex ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div className={`h-screen overflow-hidden flex ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
       <Toaster position={lang === 'ar' ? 'top-right' : 'top-left'} />
       <Sidebar isOpen={isSidebarOpen} activeModule={activeModule} setActiveModule={setActiveModule} lang={lang} user={user} />
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-50 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 bg-gray-50 h-full">
         <Header 
           lang={lang} 
           setLang={setLang} 

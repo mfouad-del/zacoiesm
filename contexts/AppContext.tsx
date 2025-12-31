@@ -68,18 +68,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ncrsData,
         documentsData,
         timesheetsData,
-        incidentsData,
-        notificationsData
+        incidentsData
       ] = await Promise.all([
         api.projects.list(),
         api.contracts.list(),
-        api.tasks.list(),
+        api.planning.list(),
         api.reports.list(),
-        api.ncr.list(),
+        api.quality.list(),
         api.documents.list(),
         api.timesheets.list(),
-        api.safety.list(),
-        api.notifications.list()
+        api.safety.list()
       ]);
 
       setState(prev => ({

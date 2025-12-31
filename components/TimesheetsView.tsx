@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Language, Timesheet } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { 
-  Plus, Check, X, Clock, Calendar, User, Briefcase, 
-  TrendingUp, AlertCircle, Search, Filter, Download,
-  ChevronLeft, ChevronRight
+  Plus, Check, X, Clock, 
+  TrendingUp, AlertCircle, Search, Filter, Download
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  AreaChart, Area, PieChart, Pie, Cell, Legend 
+  PieChart, Pie, Cell, Legend 
 } from 'recharts';
 
 interface TimesheetsViewProps {
@@ -18,10 +17,30 @@ interface TimesheetsViewProps {
   onApprove: (id: string) => void;
 }
 
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: string;
+  subtext?: string;
+}
+
+const StatCard = ({ title, value, icon: Icon, color, subtext }: StatCardProps) => (
+  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+    <div className="flex justify-between items-start mb-4">
+      <div className={`p-3 rounded-2xl ${color}`}>
+        <Icon size={24} />
+      </div>
+      {subtext && <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">{subtext}</span>}
+    </div>
+    <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">{title}</h3>
+    <p className="text-2xl font-black text-slate-900">{value}</p>
+  </div>
+);
+
 const TimesheetsView: React.FC<TimesheetsViewProps> = ({ lang, entries, onAddEntry, onApprove }) => {
   const t = TRANSLATIONS[lang];
   const [activeTab, setActiveTab] = useState<'overview' | 'list' | 'approvals'>('overview');
-  const [filterStatus, setFilterStatus] = useState('all');
 
   // Stats
   const totalHours = entries.reduce((acc, curr) => acc + Number(curr.hours), 0);
@@ -46,18 +65,8 @@ const TimesheetsView: React.FC<TimesheetsViewProps> = ({ lang, entries, onAddEnt
     { name: 'Rejected', value: entries.filter(e => e.status === 'Rejected').length, color: '#ef4444' }
   ];
 
-  const StatCard = ({ title, value, icon: Icon, color, subtext }: any) => (
-    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl ${color}`}>
-          <Icon size={24} />
-        </div>
-        {subtext && <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">{subtext}</span>}
-      </div>
-      <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">{title}</h3>
-      <p className="text-2xl font-black text-slate-900">{value}</p>
-    </div>
-  );
+  // Component moved outside
+
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -91,7 +100,7 @@ const TimesheetsView: React.FC<TimesheetsViewProps> = ({ lang, entries, onAddEnt
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id as 'overview' | 'list' | 'approvals')}
             className={`flex items-center gap-2 px-6 py-3 rounded-t-2xl text-sm font-bold transition-all border-b-2 
               ${activeTab === tab.id 
                 ? 'border-brand-600 text-brand-600 bg-brand-50/50' 

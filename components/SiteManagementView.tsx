@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Language, Report } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { Plus, Sun, Users, Truck, MessageSquare, Clock, MapPin, CloudRain, Wind, AlertTriangle, CheckCircle, Download, Calendar } from 'lucide-react';
+import { Plus, Sun, Users, Truck, MessageSquare, Clock, MapPin, AlertTriangle, CheckCircle, Download, Calendar } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -29,7 +29,7 @@ const SiteManagementView: React.FC<SiteManagementViewProps> = ({ lang, reports, 
     doc.text(`${lang === 'ar' ? 'المشروع' : 'Project'}: ${report.projectId}`, 20, 50);
 
     // Weather Section
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: 60,
       head: [[lang === 'ar' ? 'الطقس' : 'Weather Conditions']],
@@ -41,7 +41,7 @@ const SiteManagementView: React.FC<SiteManagementViewProps> = ({ lang, reports, 
     });
 
     // Resources
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الموارد' : 'Resources', lang === 'ar' ? 'العدد' : 'Count']],
@@ -53,7 +53,7 @@ const SiteManagementView: React.FC<SiteManagementViewProps> = ({ lang, reports, 
     });
 
     // Activities
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الأنشطة المنجزة' : 'Completed Activities']],
@@ -64,7 +64,7 @@ const SiteManagementView: React.FC<SiteManagementViewProps> = ({ lang, reports, 
 
     // Safety
     if (report.safetyObservations && report.safetyObservations.length > 0) {
-      // @ts-ignore
+      // @ts-expect-error: jspdf-autotable types are missing
       doc.autoTable({
         startY: doc.lastAutoTable.finalY + 10,
         head: [[lang === 'ar' ? 'ملاحظات السلامة' : 'Safety Observations']],

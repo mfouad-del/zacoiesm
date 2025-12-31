@@ -5,19 +5,11 @@ export enum UserRole {
   ADMIN = 'admin',
   PROJECT_MANAGER = 'project_manager',
   SITE_ENGINEER = 'site_engineer',
-  TECHNICAL_OFFICE = 'technical_office',
-  QUALITY_MANAGER = 'quality_manager',
   QA_MANAGER = 'qa_manager',
   HSE_OFFICER = 'hse_officer',
-  SAFETY_OFFICER = 'safety_officer',
-  CONTRACTS_MANAGER = 'contracts_manager',
   ACCOUNTANT = 'accountant',
-  TOP_MANAGEMENT = 'top_management',
   CLIENT = 'client',
-  VIEWER = 'viewer',
-  USER = 'user',
-  PROCUREMENT_MANAGER = 'procurement_manager',
-  CLIENT_VIEWER = 'client_viewer'
+  VIEWER = 'viewer'
 }
 
 export interface User {
@@ -340,4 +332,35 @@ export interface BIMModel {
   size: string;
   url: string; // Path to .ifc file
   projectId: string;
+  description?: string;
+  status?: 'active' | 'archived' | 'deprecated';
+  uploadedBy?: string;
+}
+
+export interface Correspondence {
+  id: string;
+  projectId: string;
+  referenceNumber?: string;
+  type: 'incoming' | 'outgoing' | 'internal';
+  subject: string;
+  sender: string;
+  recipient: string;
+  date: string;
+  status: 'pending' | 'replied' | 'closed' | 'archived';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  content?: string;
+  attachments?: any[];
+}
+
+export interface AuditLog {
+  id: string;
+  user_id?: string;
+  action: string;
+  entity_type: string;
+  entity_id?: string;
+  details?: any;
+  created_at: string;
+  user?: {
+    full_name: string;
+  };
 }

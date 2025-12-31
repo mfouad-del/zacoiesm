@@ -24,17 +24,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeModule, setActiveModule
   const getFilteredMenuItems = () => {
     if (!user) return MENU_ITEMS;
 
-    if (user.role === UserRole.CLIENT_VIEWER) {
+    // Client & Viewer: Read-only access to specific modules
+    if (user.role === UserRole.CLIENT || user.role === UserRole.VIEWER) {
       return MENU_ITEMS.filter(item => 
-        ['dashboard', 'projects', 'documents', 'site'].includes(item.id)
+        ['dashboard', 'projects', 'documents', 'reports'].includes(item.id)
       );
     }
     
-    if (user.role === UserRole.PROCUREMENT_MANAGER) {
+    // Accountant: Financials focus
+    if (user.role === UserRole.ACCOUNTANT) {
        return MENU_ITEMS.filter(item => 
-        ['dashboard', 'procurement', 'projects', 'contracts', 'costs', 'settings'].includes(item.id)
+        ['dashboard', 'costs', 'procurement', 'contracts', 'timesheets', 'reports'].includes(item.id)
       );
     }
+
+    // HSE Officer: Safety focus
+    if (user.role === UserRole.HSE_OFFICER) {
+      return MENU_ITEMS.filter(item => 
+       ['dashboard', 'safety', 'site', 'reports'].includes(item.id)
+     );
+   }
 
     return MENU_ITEMS;
   };

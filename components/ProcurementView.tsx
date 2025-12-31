@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Language, ProcurementOrder, Supplier, Project, UserRole } from '../types';
+import { fetchProcurementOrders, fetchSuppliers, createProcurementOrder, createSupplier, updateProcurementOrder } from '../lib/services';
 import { TRANSLATIONS } from '../constants';
 import { 
   ShoppingCart, 
   Plus, 
   Filter, 
   Search, 
-  FileText, 
   CheckCircle2, 
-  XCircle, 
-  Clock, 
-  Truck, 
   Users, 
-  MoreVertical,
-  Download,
   Loader2
 } from 'lucide-react';
 import { 
@@ -57,9 +52,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { procurementApi } from '../lib/api';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 
 interface ProcurementViewProps {
   lang: Language;
@@ -93,68 +86,29 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
     address: ''
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // In a real app, these would be parallel fetches
-      // const [ordersData, suppliersData] = await Promise.all([
-      //   procurementApi.listOrders(),
-      //   procurementApi.listSuppliers()
-      // ]);
+      const [ordersData, suppliersData] = await Promise.all([
+        fetchProcurementOrders(),
+        fetchSuppliers()
+      ]);
       
-      // Mocking data for now as backend endpoints might not be fully ready
-      // But structure is ready for real API calls
-      
-      // Mock Suppliers
-      const mockSuppliers: Supplier[] = [
-        { id: 'SUP-001', name: 'BuildCo Materials', contactPerson: 'John Smith', email: 'sales@buildco.com', phone: '+966 50 000 0000', address: 'Riyadh Ind. City', status: 'active', rating: 4.5 },
-        { id: 'SUP-002', name: 'Steel Masters', contactPerson: 'Ali Ahmed', email: 'ali@steelmasters.sa', phone: '+966 55 111 2222', address: 'Jeddah Port', status: 'active', rating: 4.8 },
-      ];
-      setSuppliers(mockSuppliers);
-
-      // Mock Orders
-      const mockOrders: ProcurementOrder[] = [
-        {
-          id: 'PO-2024-001',
-          orderNumber: 'PO-001',
-          projectId: projects[0]?.id || 'PRJ-001',
-          supplierId: 'SUP-001',
-          items: [
-            { id: 'ITM-1', description: 'Cement Bags (50kg)', quantity: 100, unit: 'Bag', unitPrice: 25, totalPrice: 2500 }
-          ],
-          totalAmount: 2500,
-          status: 'approved',
-          requestDate: '2024-06-01',
-          requestedBy: 'Eng. Sarah',
-          approvedBy: 'Manager Ahmed'
-        },
-        {
-          id: 'PO-2024-002',
-          orderNumber: 'PO-002',
-          projectId: projects[0]?.id || 'PRJ-001',
-          supplierId: 'SUP-002',
-          items: [
-            { id: 'ITM-2', description: 'Steel Rebar 16mm', quantity: 5, unit: 'Ton', unitPrice: 2800, totalPrice: 14000 }
-          ],
-          totalAmount: 14000,
-          status: 'pending_approval',
-          requestDate: '2024-06-05',
-          requestedBy: 'Eng. Sarah'
-        }
-      ];
-      setOrders(mockOrders);
+      setOrders(ordersData || []);
+      setSuppliers(suppliersData || []);
 
     } catch (error) {
-      console.error('Failed to load procurement data', error);
-      toast.error('Failed to load data');
+      console.error('Failed to load procurement data:', error);
+      toast.error(lang === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data');
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCreateOrder = async () => {
     // Validation logic here
@@ -165,11 +119,12 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
 
     setIsLoading(true);
     try {
-      // await procurementApi.createOrder(newOrder);
+      await createProcurementOrder(newOrder, newOrder.items || []);
       toast.success('Order created successfully');
       setIsOrderModalOpen(false);
       loadData();
     } catch (error) {
+      console.error(error);
       toast.error('Failed to create order');
     } finally {
       setIsLoading(false);
@@ -184,11 +139,12 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
 
     setIsLoading(true);
     try {
-      // await procurementApi.createSupplier(newSupplier);
+      await createSupplier(newSupplier);
       toast.success('Supplier added successfully');
       setIsSupplierModalOpen(false);
       loadData();
     } catch (error) {
+      console.error(error);
       toast.error('Failed to add supplier');
     } finally {
       setIsLoading(false);
@@ -202,14 +158,14 @@ export default function ProcurementView({ lang, projects, userRole }: Procuremen
     }
 
     try {
-      // await procurementApi.updateOrder(orderId, { status: 'approved' });
+      await updateProcurementOrder(orderId, { status: 'approved' });
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: 'approved' } : o));
       toast.success('Order approved');
     } catch (error) {
+      console.error(error);
       toast.error('Failed to approve order');
     }
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved': return <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">Approved</Badge>;

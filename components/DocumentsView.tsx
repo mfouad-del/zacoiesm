@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Language, Document } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { 
-  FileText, File, Image, FileSpreadsheet, Search, Filter, 
-  Download, FolderOpen, Clock, CheckCircle, AlertCircle, 
-  MoreVertical, Eye, UploadCloud, FileCode, ChevronRight,
+  FileText, File, Image, FileSpreadsheet, Search, 
+  Download, FolderOpen, Clock, CheckCircle, 
+  Eye, UploadCloud, FileCode,
   LayoutGrid, List
 } from 'lucide-react';
 

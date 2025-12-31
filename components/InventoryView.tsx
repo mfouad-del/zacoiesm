@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language, InventoryItem, StockTransaction } from '../types';
+import { fetchInventory } from '../lib/services';
 import { TRANSLATIONS } from '../constants';
 import { 
   Box, 
@@ -9,8 +10,10 @@ import {
   ArrowUpRight, 
   ArrowDownLeft, 
   History,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,18 +40,50 @@ interface InventoryViewProps {
 export default function InventoryView({ lang }: InventoryViewProps) {
   const t = TRANSLATIONS[lang];
   const [activeTab, setActiveTab] = useState('stock');
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [transactions, setTransactions] = useState<StockTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock Data
-  const [inventory, setInventory] = useState<InventoryItem[]>([
-    { id: 'INV-001', name: 'Cement (Type I)', sku: 'MAT-CEM-001', category: 'Raw Materials', quantity: 500, unit: 'Bags', minLevel: 100, location: 'Warehouse A', lastUpdated: '2024-06-10' },
-    { id: 'INV-002', name: 'Steel Rebar 16mm', sku: 'MAT-STL-016', category: 'Raw Materials', quantity: 50, unit: 'Tons', minLevel: 20, location: 'Yard B', lastUpdated: '2024-06-12' },
-    { id: 'INV-003', name: 'Safety Helmets', sku: 'PPE-HLM-001', category: 'PPE', quantity: 15, unit: 'Pcs', minLevel: 20, location: 'Store Room', lastUpdated: '2024-06-01' },
-  ]);
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchInventory();
+        // Map DB resources to InventoryItem
+        const mappedInventory: InventoryItem[] = (data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          sku: item.id.substring(0, 8).toUpperCase(), // Mock SKU from ID
+          category: item.category,
+          quantity: item.quantity,
+          unit: item.unit,
+          minLevel: item.min_quantity || 0,
+          location: 'Main Site', // Placeholder
+          lastUpdated: new Date(item.updated_at).toLocaleDateString()
+        }));
+        setInventory(mappedInventory);
+        // Mock transactions for now as we don't have an API for it yet
+        setTransactions([
+          { id: 'TRX-001', itemId: mappedInventory[0]?.id || 'INV-001', type: 'in', quantity: 200, date: '2024-06-10', reference: 'PO-2024-001', performedBy: 'Ahmed Storekeeper' }
+        ]);
+      } catch (error) {
+        console.error('Failed to load inventory:', error);
+        toast.error(lang === 'ar' ? 'فشل تحميل المخزون' : 'Failed to load inventory');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const [transactions, setTransactions] = useState<StockTransaction[]>([
-    { id: 'TRX-001', itemId: 'INV-001', type: 'in', quantity: 200, date: '2024-06-10', reference: 'PO-2024-001', performedBy: 'Ahmed Storekeeper' },
-    { id: 'TRX-002', itemId: 'INV-002', type: 'out', quantity: 10, date: '2024-06-11', reference: 'PRJ-001', performedBy: 'Ali Site Eng' },
-  ]);
+    loadData();
+  }, [lang]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6 bg-slate-50/50 min-h-screen">

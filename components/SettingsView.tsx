@@ -1,32 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Language, User, UserRole } from '../types';
+import { Language, User } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { 
   User as UserIcon, 
-  Shield, 
+  Users,
   Bell, 
-  Globe, 
-  Save, 
   Trash2, 
   Plus, 
-  X, 
   Loader2,
-  Mail,
-  Lock,
-  Camera,
-  LogOut,
   Download,
   FileText,
   CheckCircle2,
-  AlertCircle
+  Monitor,
+  Key,
+  Webhook
 } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
   CardDescription, 
   CardHeader, 
-  CardTitle,
-  CardFooter
+  CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,7 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { fetchUsers, createUser, deleteUser, changePassword, updateUser } from '../lib/api';
+import { fetchUsers, createUser, deleteUser, changePassword } from '../lib/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
@@ -87,7 +81,7 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
   });
 
   // Users Management State
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Record<string, unknown>[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [newUserForm, setNewUserForm] = useState({
     full_name: '',
@@ -151,8 +145,9 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
       }
 
       toast.success('Profile updated successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -167,8 +162,9 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
       setIsUserModalOpen(false);
       setNewUserForm({ full_name: '', email: '', password: '', role: 'user', phone: '' });
       loadUsers();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create user');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create user';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -181,8 +177,9 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
       await deleteUser(userId);
       toast.success('User deleted successfully');
       loadUsers();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete user');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete user';
+      toast.error(errorMessage);
     }
   };
 
@@ -243,22 +240,26 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1">
           <TabsTrigger value="profile" className="gap-2 py-2">
             <UserIcon className="h-4 w-4" />
             {lang === 'ar' ? 'الملف الشخصي' : 'Profile'}
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2 py-2">
-            <Shield className="h-4 w-4" />
-            {t.userManagement}
+            <Users className="h-4 w-4" />
+            {lang === 'ar' ? 'المستخدمين' : 'Users'}
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2 py-2">
             <Bell className="h-4 w-4" />
             {lang === 'ar' ? 'الإشعارات' : 'Notifications'}
           </TabsTrigger>
           <TabsTrigger value="system" className="gap-2 py-2">
-            <Globe className="h-4 w-4" />
+            <Monitor className="h-4 w-4" />
             {lang === 'ar' ? 'النظام' : 'System'}
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className="gap-2 py-2">
+            <Webhook className="h-4 w-4" />
+            {lang === 'ar' ? 'الربط' : 'Integrations'}
           </TabsTrigger>
         </TabsList>
 
@@ -586,6 +587,70 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid gap-2">
+                <Label>{lang === 'ar' ? 'المظهر' : 'Theme'}</Label>
+                <Select defaultValue="system">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">{lang === 'ar' ? 'فاتح' : 'Light'}</SelectItem>
+                    <SelectItem value="dark">{lang === 'ar' ? 'داكن' : 'Dark'}</SelectItem>
+                    <SelectItem value="system">{lang === 'ar' ? 'النظام' : 'System'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Integrations Tab */}
+        <TabsContent value="integrations" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{lang === 'ar' ? 'مفاتيح API' : 'API Keys'}</CardTitle>
+              <CardDescription>
+                {lang === 'ar' ? 'إدارة مفاتيح الوصول للربط مع الأنظمة الخارجية.' : 'Manage access keys for external system integration.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <p className="font-medium">Production Key</p>
+                  <p className="text-sm text-muted-foreground">Created on 2024-01-01</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-slate-100 px-2 py-1 rounded">pk_live_...8923</code>
+                  <Button variant="ghost" size="sm"><Key className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" className="text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+              <Button className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                {lang === 'ar' ? 'إنشاء مفتاح جديد' : 'Generate New Key'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{lang === 'ar' ? 'Webhooks' : 'Webhooks'}</CardTitle>
+              <CardDescription>
+                {lang === 'ar' ? 'إعداد إشعارات الأحداث للأنظمة الخارجية.' : 'Configure event notifications for external systems.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <p className="font-medium">Order Created Webhook</p>
+                  <p className="text-sm text-muted-foreground">https://api.erp-system.com/webhooks/orders</p>
+                </div>
+                <Badge className="bg-green-100 text-green-700">Active</Badge>
+              </div>
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                {lang === 'ar' ? 'إضافة Webhook' : 'Add Webhook'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

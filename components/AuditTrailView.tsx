@@ -1,17 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { auditLogger } from '@/lib/audit/logger';
+import { fetchAuditLogs } from '@/lib/services';
 import { 
   Search, 
   Filter, 
   Download, 
   FileText, 
-  Calendar as CalendarIcon,
   Activity,
   User,
   Shield,
-  Eye,
-  ArrowRight,
-  Loader2
+  Eye
 } from 'lucide-react';
 import { 
   Card, 
@@ -45,10 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -57,11 +51,10 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { format, subDays, isWithinInterval, parseISO } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
-import { MOCK_AUDIT_LOGS } from '@/lib/mockData';
 
 // Types for our Audit Log
 interface AuditLog {
@@ -71,8 +64,8 @@ interface AuditLog {
   entity_type: string;
   entity_id?: string;
   entity_name?: string;
-  old_values?: any;
-  new_values?: any;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   ip_address?: string;
   created_at: string;
   user?: {
@@ -85,48 +78,45 @@ interface AuditTrailViewProps {
   lang?: 'ar' | 'en';
 }
 
-export default function AuditTrailView({ lang = 'ar' }: AuditTrailViewProps) {
+export default function AuditTrailView({ lang: _lang = 'ar' }: AuditTrailViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('ALL');
   const [entityFilter, setEntityFilter] = useState('ALL');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [logs, setLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
 
   // Fetch logs from backend
   useEffect(() => {
-    const fetchLogs = async () => {
-      setIsLoading(true);
+    const loadLogs = async () => {
       try {
-        const data = await auditLogger.queryLogs({
-          limit: 100,
-          action: actionFilter !== 'ALL' ? actionFilter as any : undefined,
-          entityType: entityFilter !== 'ALL' ? entityFilter as any : undefined,
+        const data = await fetchAuditLogs({
+          action: actionFilter,
+          entityType: entityFilter
         });
         
-        if (data && data.length > 0) {
-          // Transform data to match our interface if needed
-          // Assuming the backend returns data matching the interface mostly
-          setLogs(data as unknown as AuditLog[]);
-        } else {
-          // Fallback to mock data if no real data found (for demo purposes)
-          // In a real app, we might just show empty state
-          // setLogs(MOCK_AUDIT_LOGS); 
-          // Keeping MOCK_AUDIT_LOGS as initial state is better
+        if (data) {
+          const mappedLogs = data.map((log: any) => ({
+            id: log.id,
+            user_id: log.user_id,
+            action: log.action,
+            entity_type: log.entity_type,
+            entity_id: log.entity_id,
+            entity_name: log.details?.entity_name,
+            old_values: log.details?.old_values,
+            new_values: log.details?.new_values,
+            ip_address: log.details?.ip_address,
+            created_at: log.created_at,
+            user: log.user
+          }));
+          setLogs(mappedLogs);
         }
       } catch (error) {
-        console.error("Failed to fetch audit logs", error);
-      } finally {
-        setIsLoading(false);
+        console.error('Failed to fetch audit logs:', error);
       }
     };
 
-    // Uncomment to enable real fetching
-    // fetchLogs();
-    
-    // For now, we simulate a fetch with mock data to show the loading state
-    // and then use the filtered mock data
+    loadLogs();
   }, [actionFilter, entityFilter]);
 
   // Filter logs based on search (client-side for now)

@@ -149,7 +149,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ projects, lang, incidents
 
         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex flex-col">
           <h3 className="text-lg font-bold text-slate-900 tracking-tight mb-8">{t.projectDistribution}</h3>
-          <div className="flex-1 flex items-center justify-center relative">
+          <div className="flex-1 flex items-center justify-center relative min-h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

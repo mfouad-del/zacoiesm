@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Language, PlanningTask } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { GanttChartSquare, Download, Plus, LayoutList, Calendar, Filter, Search, ChevronRight, ChevronDown, Clock, AlertCircle, CheckCircle, User } from 'lucide-react';
+import { GanttChartSquare, Download, Plus, LayoutList, Filter, Search, Clock, AlertCircle, CheckCircle, User } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -78,7 +78,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ lang, activities, onAddActi
       a.assignee || '-'
     ]);
 
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: 40,
       head: [[

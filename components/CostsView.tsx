@@ -1,30 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Project, Language, Expense, Resource } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { fetchExpenses, fetchInventory } from '../lib/services';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, 
   PieChart, Pie, Cell, AreaChart, Area 
 } from 'recharts';
 import { 
   ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, TrendingDown, 
-  Package, Users, Truck, Briefcase, Plus, Filter, Download, Search 
+  Package, Users, Truck, Briefcase, Plus, Filter, Download, Search, Loader2
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CostsViewProps {
   lang: Language;
   projects: Project[];
-  expenses: Expense[];
-  resources: Resource[];
   onAddExpense: () => void;
   onAddResource: () => void;
 }
 
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  subtext?: string;
+  icon: React.ElementType;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+const StatCard = ({ title, value, subtext, icon: Icon, trend }: StatCardProps) => (
+  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+    <div className="flex justify-between items-start mb-4">
+      <div className={`p-3 rounded-2xl ${trend === 'up' ? 'bg-emerald-50 text-emerald-600' : trend === 'down' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+        <Icon size={24} />
+      </div>
+      <span className={`flex items-center text-xs font-bold px-2 py-1 rounded-lg ${trend === 'up' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+        {trend === 'up' ? <ArrowUpRight size={14} className="mr-1" /> : <ArrowDownRight size={14} className="mr-1" />}
+        {subtext}
+      </span>
+    </div>
+    <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">{title}</h3>
+    <p className="text-2xl font-black text-slate-900">{value}</p>
+  </div>
+);
+
+interface TabButtonProps {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  activeTab: string;
+  setActiveTab: (id: 'overview' | 'expenses' | 'resources') => void;
+}
+
+const TabButton = ({ id, label, icon: Icon, activeTab, setActiveTab }: TabButtonProps) => (
+  <button
+    onClick={() => setActiveTab(id as 'overview' | 'expenses' | 'resources')}
+    className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all
+      ${activeTab === id 
+        ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' 
+        : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`}
+  >
+    <Icon size={18} />
+    {label}
+  </button>
+);
+
 const CostsView: React.FC<CostsViewProps> = ({ 
-  lang, projects, expenses, resources, onAddExpense, onAddResource 
+  lang, projects, onAddExpense, onAddResource 
 }) => {
-  const t = TRANSLATIONS[lang];
   const [activeTab, setActiveTab] = useState<'overview' | 'expenses' | 'resources'>('overview');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const [expensesData, resourcesData] = await Promise.all([
+          fetchExpenses(),
+          fetchInventory()
+        ]);
+        
+        // Map DB resources to UI Resource type
+        const mappedResources = (resourcesData || []).map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          type: r.category || 'Material', // Default to Material if category missing
+          unit: r.unit,
+          unitCost: r.unit_price || 0,
+          totalQuantity: r.quantity || 0,
+          usedQuantity: 0, // TODO: Calculate from transactions
+          projectId: r.site_id // Using site_id as proxy for project context
+        }));
+
+        setExpenses(expensesData || []);
+        setResources(mappedResources);
+      } catch (error) {
+        console.error('Failed to load costs data:', error);
+        toast.error(lang === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [lang]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   // --- Calculations ---
   const totalBudget = projects.reduce((acc, p) => acc + (Number(p.budget) || 0), 0);
@@ -46,42 +133,10 @@ const CostsView: React.FC<CostsViewProps> = ({
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   // Resource Usage
-  const resourceUsage = resources.map(r => ({
-    name: r.name,
-    used: (r.usedQuantity / r.totalQuantity) * 100,
-    total: r.totalQuantity,
-    remaining: r.totalQuantity - r.usedQuantity
-  }));
 
   // --- Helper Components ---
-  const StatCard = ({ title, value, subtext, icon: Icon, trend }: any) => (
-    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl ${trend === 'up' ? 'bg-emerald-50 text-emerald-600' : trend === 'down' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-          <Icon size={24} />
-        </div>
-        <span className={`flex items-center text-xs font-bold px-2 py-1 rounded-lg ${trend === 'up' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-          {trend === 'up' ? <ArrowUpRight size={14} className="mr-1" /> : <ArrowDownRight size={14} className="mr-1" />}
-          {subtext}
-        </span>
-      </div>
-      <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">{title}</h3>
-      <p className="text-2xl font-black text-slate-900">{value}</p>
-    </div>
-  );
+  // Components moved outside
 
-  const TabButton = ({ id, label, icon: Icon }: any) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all
-        ${activeTab === id 
-          ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' 
-          : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`}
-    >
-      <Icon size={18} />
-      {label}
-    </button>
-  );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -108,9 +163,9 @@ const CostsView: React.FC<CostsViewProps> = ({
 
       {/* Tabs */}
       <div className="flex gap-4 overflow-x-auto pb-2">
-        <TabButton id="overview" label={lang === 'ar' ? 'نظرة عامة' : 'Overview'} icon={DollarSign} />
-        <TabButton id="expenses" label={lang === 'ar' ? 'المصروفات' : 'Expenses'} icon={TrendingDown} />
-        <TabButton id="resources" label={lang === 'ar' ? 'الموارد' : 'Resources'} icon={Package} />
+        <TabButton id="overview" label={lang === 'ar' ? 'نظرة عامة' : 'Overview'} icon={DollarSign} activeTab={activeTab} setActiveTab={setActiveTab} />
+        <TabButton id="expenses" label={lang === 'ar' ? 'المصروفات' : 'Expenses'} icon={TrendingDown} activeTab={activeTab} setActiveTab={setActiveTab} />
+        <TabButton id="resources" label={lang === 'ar' ? 'الموارد' : 'Resources'} icon={Package} activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
 
       {/* Content */}

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language, BIMModel } from '../types';
+import { fetchBIMModels } from '../lib/services';
 import { TRANSLATIONS } from '../constants';
 import { 
   BoxSelect, 
@@ -8,8 +9,10 @@ import {
   Layers, 
   Maximize2, 
   Settings,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,13 +32,45 @@ interface BIMViewProps {
 export default function BIMView({ lang }: BIMViewProps) {
   const t = TRANSLATIONS[lang];
   const [selectedModel, setSelectedModel] = useState<BIMModel | null>(null);
+  const [models, setModels] = useState<BIMModel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock Data
-  const [models, setModels] = useState<BIMModel[]>([
-    { id: 'BIM-001', name: 'Structural Model - Block A', version: 'v2.1', uploadDate: '2024-06-15', size: '45 MB', url: '/models/struct-a.ifc', projectId: 'PRJ-001' },
-    { id: 'BIM-002', name: 'MEP Model - Block A', version: 'v1.4', uploadDate: '2024-06-18', size: '32 MB', url: '/models/mep-a.ifc', projectId: 'PRJ-001' },
-    { id: 'BIM-003', name: 'Architectural Model - Block B', version: 'v3.0', uploadDate: '2024-06-20', size: '120 MB', url: '/models/arch-b.ifc', projectId: 'PRJ-001' },
-  ]);
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchBIMModels();
+        const mappedModels = (data || []).map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          version: m.version,
+          uploadDate: new Date(m.created_at).toLocaleDateString(),
+          size: m.metadata?.size || 'Unknown',
+          url: m.file_url,
+          projectId: m.project_id
+        }));
+        setModels(mappedModels);
+        if (mappedModels.length > 0) {
+          setSelectedModel(mappedModels[0]);
+        }
+      } catch (error) {
+        console.error('Failed to load BIM models:', error);
+        toast.error(lang === 'ar' ? 'فشل تحميل نماذج BIM' : 'Failed to load BIM models');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [lang]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6 bg-slate-50/50 min-h-screen flex flex-col h-screen">

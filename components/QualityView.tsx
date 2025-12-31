@@ -47,7 +47,7 @@ const QualityView: React.FC<QualityViewProps> = ({ lang, ncrs, onAddNCR, onUpdat
     doc.text(`${lang === 'ar' ? 'الحالة' : 'Status'}: ${ncr.status.toUpperCase()}`, 150, 35);
 
     // Details Table
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: 50,
       head: [[lang === 'ar' ? 'التفاصيل' : 'Details', '']],
@@ -64,7 +64,7 @@ const QualityView: React.FC<QualityViewProps> = ({ lang, ncrs, onAddNCR, onUpdat
     });
 
     // Description & Analysis
-    // @ts-ignore
+    // @ts-expect-error: jspdf-autotable types are missing
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 10,
       head: [[lang === 'ar' ? 'الوصف والتحليل' : 'Description & Analysis']],
