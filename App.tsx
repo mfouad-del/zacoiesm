@@ -210,6 +210,13 @@ const App: React.FC = () => {
     setTimesheets(timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t));
   }, [timesheets]);
 
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    localStorage.removeItem('sb-access-token');
+    setIsAuthenticated(false);
+  };
+
   const renderModule = () => {
     switch (activeModule) {
       case 'dashboard': return <DashboardView 
@@ -257,6 +264,8 @@ const App: React.FC = () => {
           isSidebarOpen={isSidebarOpen} 
           user={user}
           onSearch={handleSearch}
+          onNavigate={setActiveModule}
+          onLogout={handleLogout}
         />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {renderModule()}

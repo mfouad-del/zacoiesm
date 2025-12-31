@@ -29,9 +29,20 @@ interface HeaderProps {
   isSidebarOpen: boolean;
   user: User;
   onSearch: (query: string) => void;
+  onNavigate: (module: string) => void;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ lang, setLang, setSidebarOpen, isSidebarOpen: _isSidebarOpen, user, onSearch }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  lang, 
+  setLang, 
+  setSidebarOpen, 
+  isSidebarOpen: _isSidebarOpen, 
+  user, 
+  onSearch,
+  onNavigate,
+  onLogout
+}) => {
   const t = TRANSLATIONS[lang];
   const [openSearch, setOpenSearch] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -173,20 +184,20 @@ const Header: React.FC<HeaderProps> = ({ lang, setLang, setSidebarOpen, isSideba
           <DropdownMenuContent align={lang === 'ar' ? 'start' : 'end'} className="w-56">
             <DropdownMenuLabel>{lang === 'ar' ? 'حسابي' : 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onNavigate('settings')} className="cursor-pointer">
               <UserCircle className="mr-2 h-4 w-4" />
               <span>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
               <CreditCard className="mr-2 h-4 w-4" />
               <span>{lang === 'ar' ? 'الاشتراك' : 'Billing'}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onNavigate('settings')} className="cursor-pointer">
               <Settings className="mr-2 h-4 w-4" />
               <span>{lang === 'ar' ? 'الإعدادات' : 'Settings'}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={onLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Log out'}</span>
             </DropdownMenuItem>
