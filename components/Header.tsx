@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Search, Globe, User as UserIcon, ChevronDown, Settings, LogOut, UserCircle, CreditCard, Bell } from 'lucide-react';
+import { Menu, Search, Globe, User as UserIcon, ChevronDown, Settings, LogOut, UserCircle, Bell } from 'lucide-react';
 import { Language, User } from '../types';
 import { TRANSLATIONS } from '../constants';
 import NotificationsPanel from './NotificationsPanel';
@@ -187,10 +187,6 @@ const Header: React.FC<HeaderProps> = ({
             <DropdownMenuItem onClick={() => onNavigate('settings')} className="cursor-pointer">
               <UserCircle className="mr-2 h-4 w-4" />
               <span>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <CreditCard className="mr-2 h-4 w-4" />
-              <span>{lang === 'ar' ? 'الاشتراك' : 'Billing'}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onNavigate('settings')} className="cursor-pointer">
               <Settings className="mr-2 h-4 w-4" />
