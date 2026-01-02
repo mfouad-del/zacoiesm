@@ -57,7 +57,13 @@ const App: React.FC = () => {
       const supabase = createClient();
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
-        setUser(prev => ({ ...prev, id: authUser.id, email: authUser.email || prev.email }));
+        setUser(prev => ({
+          ...prev,
+          id: authUser.id,
+          email: authUser.email || prev.email,
+          name: (authUser.user_metadata?.full_name as string | undefined) || prev.name,
+          avatar: (authUser.user_metadata?.avatar_url as string | undefined) || prev.avatar
+        }));
       }
     };
     if (isAuthenticated) {

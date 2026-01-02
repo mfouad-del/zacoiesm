@@ -54,6 +54,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { fetchUsers, createUser, deleteUser, changePassword } from '../lib/services';
+import { createClient } from '../lib/supabase/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
@@ -125,8 +126,23 @@ export default function SettingsView({ lang, user, onUpdateUser }: SettingsViewP
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const supabase = createClient();
+
+      // Persist profile changes to Supabase auth user
+      if (profileForm.email && profileForm.email !== user.email) {
+        const { error } = await supabase.auth.updateUser({ email: profileForm.email });
+        if (error) throw error;
+      }
+
+      {
+        const { error } = await supabase.auth.updateUser({
+          data: {
+            full_name: profileForm.name,
+            avatar_url: profileForm.avatar
+          }
+        });
+        if (error) throw error;
+      }
       
       // Update global user state
       onUpdateUser({
