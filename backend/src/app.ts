@@ -1,10 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import routes from './routes';
+import { config } from './config/env';
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: config.corsOrigins && config.corsOrigins.length > 0 ? config.corsOrigins : true,
+    credentials: true
+  })
+);
 app.use(express.json());
 
 // API Routes

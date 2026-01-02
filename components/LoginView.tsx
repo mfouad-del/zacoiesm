@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Lock, Mail, Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { secureStorage, checkRateLimit, generateCSRFToken } from '../lib/utils/security';
 import toast, { Toaster } from 'react-hot-toast';
 import { createClient } from '../lib/supabase/client';
@@ -19,9 +18,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
-  const captchaRef = useRef<HCaptcha>(null);
-  const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '10000000-ffff-ffff-ffff-000000000001';
+  const captchaRef = useRef<unknown>(null);
 
   useEffect(() => {
     // Generate CSRF token on mount
@@ -38,13 +35,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     const canProceed = checkRateLimit('login-attempt', { maxAttempts: 5, windowMs: 15 * 60 * 1000 });
     if (!canProceed) {
       setError('محاولات تسجيل دخول كثيرة. حاول بعد 15 دقيقة');
-      setLoading(false);
-      return;
-    }
-
-    // Validate hCaptcha
-    if (!hcaptchaToken) {
-      setError('يرجى إكمال التحقق من hCaptcha');
       setLoading(false);
       return;
     }
@@ -67,9 +57,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       const message = err instanceof Error ? err.message : 'فشل تسجيل الدخول';
       setError(message);
       toast.error(message);
-      // Reset captcha on error
-      captchaRef.current?.resetCaptcha();
-      setHcaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -156,17 +143,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 required
               />
             </div>
-          </div>
-
-          {/* hCaptcha Verification */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-center">
-             <HCaptcha
-                ref={captchaRef}
-                sitekey={HCAPTCHA_SITE_KEY}
-                onVerify={(token) => setHcaptchaToken(token)}
-                onExpire={() => setHcaptchaToken(null)}
-                onError={() => setHcaptchaToken(null)}
-             />
           </div>
 
           <button

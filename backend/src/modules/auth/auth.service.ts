@@ -20,11 +20,32 @@ export class AuthService {
   }
 
   static generateToken(payload: UserPayload): string {
+    if (!config.jwtSecret) {
+      throw new Error('JWT secret is not configured');
+    }
     const options: SignOptions = { expiresIn: config.jwtExpiresIn as any };
     return jwt.sign(payload, config.jwtSecret as jwt.Secret, options);
   }
 
   static verifyToken(token: string): UserPayload {
-    return jwt.verify(token, config.jwtSecret) as UserPayload;
+    if (!config.jwtSecret) {
+      throw new Error('JWT secret is not configured');
+    }
+
+    const decoded = jwt.verify(token, config.jwtSecret as jwt.Secret);
+    if (typeof decoded !== 'object' || decoded === null) {
+      throw new Error('Invalid token payload');
+    }
+
+    const anyDecoded = decoded as any;
+    if (typeof anyDecoded.id !== 'string' || typeof anyDecoded.email !== 'string' || typeof anyDecoded.role !== 'string') {
+      throw new Error('Invalid token payload');
+    }
+
+    return {
+      id: anyDecoded.id,
+      email: anyDecoded.email,
+      role: anyDecoded.role as UserRole
+    };
   }
 }

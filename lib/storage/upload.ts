@@ -3,6 +3,8 @@
  * File Upload System - Cloudflare R2 (via Backend Presigned URLs)
  */
 
+import { createClient } from '../supabase/client';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
 export interface UploadOptions {
@@ -55,11 +57,19 @@ export const uploadFile = async (
   }
   
   try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+    if (!accessToken) {
+      throw new Error('Not authenticated');
+    }
+
     // 1. Get Presigned URL from Backend
     const response = await fetch(`${API_URL}/upload/presigned-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         filename: file.name,

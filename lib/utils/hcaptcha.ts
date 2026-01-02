@@ -18,34 +18,10 @@ export interface HCaptchaVerifyResponse {
  * This should be called from your backend/serverless function
  */
 export const verifyHCaptchaToken = async (token: string): Promise<HCaptchaVerifyResponse> => {
-  const secret = import.meta.env.VITE_HCAPTCHA_SECRET;
-  
-  if (!secret) {
-    throw new Error('hCaptcha secret not configured');
-  }
-
-  try {
-    const response = await fetch('https://hcaptcha.com/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        secret,
-        response: token
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`hCaptcha verification failed: ${response.statusText}`);
-    }
-
-    const data: HCaptchaVerifyResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error('hCaptcha verification error:', error);
-    throw error;
-  }
+  // External captcha verification is disabled in this project.
+  // If needed, implement verification on the backend only.
+  console.warn('hCaptcha verification is disabled (no external APIs).');
+  return { success: false, 'error-codes': ['disabled'] };
 };
 
 /**

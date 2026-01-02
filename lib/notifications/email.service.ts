@@ -17,72 +17,13 @@ export interface EmailTemplate {
 }
 
 class EmailService {
-  private apiKey: string;
-  private from: string;
-  private provider: 'resend' | 'sendgrid';
-
   constructor() {
-    this.apiKey = import.meta.env.VITE_EMAIL_API_KEY || '';
-    this.from = import.meta.env.VITE_EMAIL_FROM || 'noreply@iems.com';
-    this.provider = (import.meta.env.VITE_EMAIL_PROVIDER as 'resend' | 'sendgrid') || 'resend';
+    // External email providers are intentionally disabled in this project.
   }
 
   async send(notification: EmailNotification): Promise<boolean> {
-    if (!this.apiKey) {
-      console.warn('Email API key not configured. Skipping email send.');
-      return false;
-    }
-
-    try {
-      if (this.provider === 'resend') {
-        return await this.sendViaResend(notification);
-      } else {
-        return await this.sendViaSendGrid(notification);
-      }
-    } catch (error) {
-      console.error('Failed to send email:', error);
-      return false;
-    }
-  }
-
-  private async sendViaResend(notification: EmailNotification): Promise<boolean> {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`
-      },
-      body: JSON.stringify({
-        from: notification.from || this.from,
-        to: notification.to,
-        subject: notification.subject,
-        html: notification.html,
-        text: notification.text
-      })
-    });
-
-    return response.ok;
-  }
-
-  private async sendViaSendGrid(notification: EmailNotification): Promise<boolean> {
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`
-      },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: notification.to }] }],
-        from: { email: notification.from || this.from },
-        subject: notification.subject,
-        content: [
-          { type: 'text/html', value: notification.html },
-          ...(notification.text ? [{ type: 'text/plain', value: notification.text }] : [])
-        ]
-      })
-    });
-
-    return response.ok;
+    console.warn('Email sending is disabled (no external APIs).');
+    return false;
   }
 
   async sendFromTemplate(to: string, template: EmailTemplate): Promise<boolean> {
